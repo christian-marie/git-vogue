@@ -1,0 +1,8 @@
+#!/bin/sh
+if [ x"$1" = x"name" ]; then
+    echo "exploding"
+    exit 0
+else
+    echo "half-life 3 confirmed"
+    exit 3
+fi
