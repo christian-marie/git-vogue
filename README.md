@@ -24,12 +24,10 @@ cabal install git-vogue
 Usage
 -----
 
-(The usage details below are subject to change until *git-vogue*'s code is stabilised.)
-
-All you need to set up *git-vogue* for a repository is to run the following:
+Once installed, invoking is as simple as:
 
 ```bash
-git-vogue
+git vogue
 ```
 
-This will define the necessary commit hooks for your repository.
+By being integrated as a git command option, *git-vogue* is now seamlessly integrated into your git workflow.
