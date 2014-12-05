@@ -5,11 +5,13 @@ module Git.Vogue.Modules where
 
 import           Git.Vogue.Types
 
+import           Control.Monad.IO.Class
 import           Data.Monoid
 import           Data.String
 import           Data.String.Utils
-import           Data.Text         (Text)
-import qualified Data.Text         as T
+import           Data.Text              (Text)
+import qualified Data.Text              as T
+import qualified Data.Text.IO           as T
 import           System.Exit
 import           System.Process
 
@@ -17,7 +19,7 @@ ioModuleExecutorImpl :: ModuleExecutorImpl IO
 ioModuleExecutorImpl =
     ModuleExecutorImpl (f "fix") (f "check")
   where
-    f arg (ModulePath path) = do
+    f arg (Plugin path) = do
         name <- getName path
         (status, stdout, stderr) <- readProcessWithExitCode path [arg] mempty
         let glommed = fromString $ stdout <> stderr
@@ -37,10 +39,43 @@ colorize (Success     (ModuleName x) y) = "\x1b[32m" <> x <> " succeeded with " 
 colorize (Failure     (ModuleName x) y) = "\x1b[33m" <> x <> " failed with "    <> y <> "\x1b[0m"
 colorize (Catastrophe (ModuleName x) y) = "\x1b[31m" <> x <> " exploded with "  <> y <> "\x1b[0m"
 
+checkModules'
+    :: MonadIO m
+    => [Plugin]
+    -> m ()
+checkModules' ps = liftIO $ do
+    st <- fixModules ioModuleExecutorImpl ps
+    case st of
+        Success{} ->
+            exitSuccess
+        Failure _ output -> do
+            T.putStrLn output
+            exitWith $ ExitFailure 1
+        Catastrophe _ output -> do
+            T.putStrLn output
+            exitWith $ ExitFailure 2
+
+fixModules'
+    :: MonadIO m
+    => [Plugin]
+    -> m ()
+fixModules' ps = liftIO $ do
+    st <- checkModules ioModuleExecutorImpl ps
+    case st of
+        Success _ output -> do
+            T.putStrLn output
+            exitSuccess
+        Failure _ output -> do
+            T.putStrLn output
+            exitWith $ ExitFailure 1
+        Catastrophe _ output -> do
+            T.putStrLn output
+            exitWith $ ExitFailure 2
+
 checkModules
     :: Monad m
     => ModuleExecutorImpl m
-    -> [ModulePath]
+    -> [Plugin]
     -> m (Status Check)
 checkModules ModuleExecutorImpl{..} ps = do
     rs <- mapM executeCheck ps
@@ -49,7 +84,7 @@ checkModules ModuleExecutorImpl{..} ps = do
 fixModules
     :: Monad m
     => ModuleExecutorImpl m
-    -> [ModulePath]
+    -> [Plugin]
     -> m (Status Fix)
 fixModules ModuleExecutorImpl{..} ps = do
     rs <- mapM executeFix ps

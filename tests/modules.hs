@@ -78,10 +78,10 @@ runFixExecutor :: FilePath -> Status Fix -> Expectation
 runFixExecutor = runTestExecutor executeFix
 
 runTestExecutor
-    :: (ModuleExecutorImpl IO -> ModulePath -> IO (Status a))
+    :: (ModuleExecutorImpl IO -> Plugin -> IO (Status a))
     -> FilePath
     -> Status a
     -> Expectation
 runTestExecutor act mod expected =
-    act ioModuleExecutorImpl (ModulePath ("fixtures" </> mod))
+    act ioModuleExecutorImpl (Plugin ("fixtures" </> mod))
       >>= (`shouldBe` expected)
