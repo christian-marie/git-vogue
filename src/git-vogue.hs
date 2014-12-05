@@ -1,8 +1,8 @@
 module Main where
 
-import Options.Applicative
+import           Options.Applicative
 
-import Git.Vogue
+import           Git.Vogue
 
 -- | Parse command line options.
 optionsParser :: Parser VogueCommand
@@ -24,8 +24,12 @@ optionsParser = subparser
 
 -- | Parse the command line and run the command.
 main :: IO ()
-main = execParser opts >>= runCommand
+main = do
+  cmd <- execParser opts
+  runVogue plugins (runCommand cmd)
   where
+    -- FIXME: read plugins from config
+    plugins = []
     opts = info (helper <*> optionsParser)
       ( fullDesc
      <> progDesc "Make your Haskell git repository fashionable"

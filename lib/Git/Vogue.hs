@@ -70,6 +70,13 @@ instance MonadBaseControl b m => MonadBaseControl b (Vogue m) where
   liftBaseWith            = defaultLiftBaseWith StMT
   restoreM                = defaultRestoreM     unStMT
 
+-- | Execute a Vogue program
+runVogue
+    :: [Plugin]
+    -> Vogue m a
+    -> m a
+runVogue ps (Vogue act) = runReaderT act ps
+
 -- | Execute a git-vogue command.
 runCommand
     :: MonadBaseControl IO m
@@ -78,7 +85,7 @@ runCommand
 runCommand CmdInit     = runWithRepoPath gitAddHook
 runCommand CmdVerify   = error "Not implemented: verify"
 runCommand CmdList     = error "Not implemented: list"
-runCommand CmdRunCheck = error "Not implemented: check"
+runCommand CmdRunCheck = gitListHook
 runCommand CmdRunFix   = error "Not implemented: fix"
 
 -- | Find the git repository path and pass it to an action.
