@@ -1,9 +1,9 @@
 module Main where
 
-import Options.Applicative
-import Options.Applicative.Types
+import           Options.Applicative
+import           Options.Applicative.Types
 
-import Git.Vogue
+import           Git.Vogue
 
 -- | Parse command line options.
 optionsParser :: Parser VogueCommand
