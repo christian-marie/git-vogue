@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RecordWildCards       #-}
 module Git.Vogue where
 
 import           Control.Monad
@@ -7,6 +8,7 @@ import           Control.Monad.Base
 import           Control.Monad.IO.Class      ()
 import           Control.Monad.Trans.Control
 import           Data.List
+import           Data.Maybe
 import           Data.Monoid
 import           System.Directory
 import           System.Exit
@@ -23,7 +25,7 @@ preCommitCommand = "git-vogue check"
 -- | Commands, with parameters, to be executed.
 data VogueCommand
     -- | Add git-vogue support to a git repository.
-    = CmdInit
+    = CmdInit { templatePath :: Maybe FilePath }
     -- | Verify that support is installed and plugins happen.
     | CmdVerify
     -- | Run check plugins on a git repository.
@@ -36,7 +38,7 @@ data VogueCommand
 runCommand
     :: VogueCommand
     -> IO ()
-runCommand CmdInit = runWithRepoPath gitAddHook
+runCommand CmdInit{..} = runWithRepoPath (gitAddHook templatePath)
 runCommand CmdVerify = error "Not implemented: verify"
 runCommand CmdRunCheck = error "Not implemented: check"
 runCommand CmdRunFix = error "Not implemented: fix"
@@ -54,15 +56,18 @@ runWithRepoPath action = do
     action $ trim git_repo
 
 -- | Add the git pre-commit hook.
-gitAddHook :: FilePath -> IO ()
-gitAddHook path = do
+gitAddHook
+    :: Maybe FilePath -- ^ Template path
+    -> FilePath -- ^ Hook path
+    -> IO ()
+gitAddHook template path = do
     let hook = path </> ".git" </> "hooks" </> "pre-commit"
     exists <- fileExist hook
     if exists
         then updateHook hook
         else createHook hook
   where
-    createHook = copyHookTemplateTo
+    createHook = copyHookTemplateTo template
     updateHook hook = do
         content <- readFile hook
         unless (preCommitCommand `isInfixOf` content) $ do
@@ -76,10 +81,12 @@ gitAddHook path = do
 
 -- | Copy the template pre-commit hook to a git repo.
 copyHookTemplateTo
-    :: FilePath
+    :: Maybe FilePath
+    -> FilePath
     -> IO ()
-copyHookTemplateTo hook = do
-    template <- getDataFileName "templates/pre-commit"
+copyHookTemplateTo use_template hook = do
+    default_template <- getDataFileName "templates/pre-commit"
+    let template = fromMaybe default_template use_template
     copyFile template hook
     perm <- getPermissions hook
     setPermissions hook $ perm { executable = True }
