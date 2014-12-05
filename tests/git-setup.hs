@@ -19,7 +19,6 @@ import           System.Process
 import           Test.Hspec
 
 import           Git.Vogue
-import           Paths_git_vogue
 
 main :: IO ()
 main = hspec . describe "Git repository setup" $ do
@@ -39,7 +38,7 @@ main = hspec . describe "Git repository setup" $ do
             let hook = path </> ".git" </> "hooks" </> "pre-commit"
 
             -- Create an existing hook to update.
-            copyHookTemplateTo hook
+            copyHookTemplateTo (Just "templates/pre-commit") hook
 
             -- Run the setup program.
             code <- runInRepo path
@@ -70,9 +69,10 @@ runInRepo
 runInRepo path = do
     pwd <- getCurrentDirectory
     let exe = pwd </> "dist/build/git-vogue/git-vogue"
-    proc <- spawnCommand $
-        "cd " <> path <> " && " <> exe <> " init"
-    waitForProcess proc
+    let tpl = pwd </> "templates/pre-commit"
+    ps <- spawnCommand $
+        "cd " <> path <> " && " <> exe <> " init --template=" <> tpl
+    waitForProcess ps
 
 -- | Check that a pre-commit hook script is "correct".
 checkPreCommitHook
