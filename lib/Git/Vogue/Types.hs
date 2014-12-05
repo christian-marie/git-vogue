@@ -16,8 +16,8 @@ data Status a
     | Catastrophe ModuleName Text
   deriving (Show, Ord, Eq)
 
-newtype ModulePath = ModulePath {
-    unModulePath :: FilePath
+newtype Plugin = Plugin {
+    unPlugin :: FilePath
 } deriving (Show, Ord, Eq, IsString)
 
 newtype ModuleName = ModuleName {
@@ -25,6 +25,6 @@ newtype ModuleName = ModuleName {
 } deriving (Show, Ord, Eq, IsString, Monoid)
 
 data ModuleExecutorImpl m = ModuleExecutorImpl{
-    executeFix   :: ModulePath -> m (Status Fix),
-    executeCheck :: ModulePath -> m (Status Check)
+    executeFix   :: Plugin -> m (Status Fix),
+    executeCheck :: Plugin -> m (Status Check)
 }

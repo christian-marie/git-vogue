@@ -29,6 +29,8 @@ import           System.FilePath
 import           System.Posix.Files
 import           System.Process
 
+import           Git.Vogue.Modules
+import           Git.Vogue.Types
 import           Paths_git_vogue
 
 -- | Command string to insert into pre-commit hooks.
@@ -51,8 +53,6 @@ data VogueCommand
 
 -- | Plugins that git-vogue knows about.
 --   FIXME: this will become the fix/check modules
---
-type Plugin = String
 
 newtype Vogue m x = Vogue { vogue :: ReaderT [Plugin] m x }
   deriving ( Functor, Applicative, Monad
@@ -84,9 +84,13 @@ runCommand
     -> Vogue m ()
 runCommand CmdInit{..} = runWithRepoPath (gitAddHook templatePath)
 runCommand CmdVerify   = error "Not implemented: verify"
-runCommand CmdList     = error "Not implemented: list"
-runCommand CmdRunCheck = gitListHook
-runCommand CmdRunFix   = error "Not implemented: fix"
+runCommand CmdList     = gitListHook
+runCommand CmdRunCheck = do
+    plugins <- Vogue ask
+    liftBase $ checkModules' plugins
+runCommand CmdRunFix   = do
+    plugins <- Vogue ask
+    liftBase $ fixModules' plugins
 
 -- | Find the git repository path and pass it to an action.
 --
