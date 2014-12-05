@@ -40,7 +40,7 @@ At Anchor Engineering, we've been working with Haskell for some time, and we've 
 
 Nobody formats their code quite the same way, making it difficult for developers to pick up each other's code and read or change it. Differences in spaces verses tabs, or how methods are delimited can cause issues with a lack of standardization.
 
-To make things easier for everyone (including yourself), we've set up *git-vogue* to use *Stylish Haskell* to check if your code conforms to a given format. If it doesn't, your commit will not be allowed to be pushed upstream, and you will instead receive a number of recommeded changes.
+To make things easier for everyone (including yourself), we've set up *git-vogue* to use **Stylish Haskell** to check if your code conforms to a given format. If it doesn't, your commit will not be allowed to be pushed upstream, and you will instead receive a number of recommeded changes.
 
 Design Philosophy
 -----------------
