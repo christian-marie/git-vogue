@@ -11,6 +11,7 @@ import           Control.Monad.Trans.Control
 import           Data.List
 import           Data.Monoid
 import           System.Directory
+import           System.Exit
 import           System.FilePath
 import           System.Posix.Files
 import           System.Posix.Temp
@@ -18,6 +19,7 @@ import           System.Process
 import           Test.Hspec
 
 import           Git.Vogue
+import           Paths_git_vogue
 
 main :: IO ()
 main = hspec . describe "Git repository setup" $ do
@@ -26,12 +28,27 @@ main = hspec . describe "Git repository setup" $ do
             let hook = path </> ".git" </> "hooks" </> "pre-commit"
 
             -- Run the setup program.
-            runInRepo path
+            code <- runInRepo path
+            code `shouldBe` ExitSuccess
 
             -- Check that it worked.
             checkPreCommitHook hook
 
-    it "should update an existing pre-commit hook" $
+    it "should skip an already correct pre-commit hook" $
+        withGitRepo $ \path -> do
+            let hook = path </> ".git" </> "hooks" </> "pre-commit"
+
+            -- Create an existing hook to update.
+            copyHookTemplateTo hook
+
+            -- Run the setup program.
+            code <- runInRepo path
+            code `shouldBe` ExitSuccess
+
+            -- Check that it worked.
+            checkPreCommitHook hook
+
+    it "should report a conflict pre-commit hook" $
         withGitRepo $ \path -> do
             let hook = path </> ".git" </> "hooks" </> "pre-commit"
 
@@ -43,20 +60,19 @@ main = hspec . describe "Git repository setup" $ do
                 }
 
             -- Run the setup program.
-            runInRepo path
-
-            -- Check that it worked.
-            checkPreCommitHook hook
+            code <- runInRepo path
+            code `shouldBe` (ExitFailure 1)
 
 -- | Execute the setup command in a git repository.
 runInRepo
     :: FilePath
-    -> IO ()
+    -> IO ExitCode
 runInRepo path = do
     pwd <- getCurrentDirectory
     let exe = pwd </> "dist/build/git-vogue/git-vogue"
-    callCommand $
-        "cd " <> path <> " && " <> exe <> " init 2>&1 >/dev/null"
+    proc <- spawnCommand $
+        "cd " <> path <> " && " <> exe <> " init"
+    waitForProcess proc
 
 -- | Check that a pre-commit hook script is "correct".
 checkPreCommitHook

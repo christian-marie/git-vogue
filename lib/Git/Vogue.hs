@@ -2,12 +2,14 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 module Git.Vogue where
 
+import           Control.Monad
 import           Control.Monad.Base
 import           Control.Monad.IO.Class      ()
 import           Control.Monad.Trans.Control
 import           Data.List
 import           Data.Monoid
 import           System.Directory
+import           System.Exit
 import           System.FilePath
 import           System.Posix.Files
 import           System.Process
@@ -55,21 +57,35 @@ runWithRepoPath action = do
 gitAddHook :: FilePath -> IO ()
 gitAddHook path = do
     let hook = path </> ".git" </> "hooks" </> "pre-commit"
-    putStrLn $ "Adding " <> preCommitCommand <> " to hooks in " <> path
     exists <- fileExist hook
     if exists
         then updateHook hook
         else createHook hook
   where
-    updateHook hook = print ":-|"
-    createHook hook = do
-        template <- getDataFileName "templates/pre-commit"
-        copyFile template hook
-        perm <- getPermissions hook
-        setPermissions hook $ perm { executable = True }
+    createHook = copyHookTemplateTo
+    updateHook hook = do
+        content <- readFile hook
+        unless (preCommitCommand `isInfixOf` content) $ do
+            putStrLn $ "A pre-commit hook already exists at \n\t"
+                <> hook
+                <> "\nbut it does not contain the command\n\t"
+                <> preCommitCommand
+                <> "\nPlease edit the hook and add this command yourself!"
+            exitFailure
+        putStrLn "Your commit hook is already in place."
+
+-- | Copy the template pre-commit hook to a git repo.
+copyHookTemplateTo
+    :: FilePath
+    -> IO ()
+copyHookTemplateTo hook = do
+    template <- getDataFileName "templates/pre-commit"
+    copyFile template hook
+    perm <- getPermissions hook
+    setPermissions hook $ perm { executable = True }
 
 -- | Trim whitespace from a string.
 trim :: String -> String
-trim = (dropWhile ws) . (dropWhileEnd ws)
+trim = dropWhile ws . dropWhileEnd ws
   where
     ws = (`elem` " \t\n")
