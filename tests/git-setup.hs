@@ -56,7 +56,7 @@ runInRepo path = do
     pwd <- getCurrentDirectory
     let exe = pwd </> "dist/build/git-vogue/git-vogue"
     callCommand $
-        "cd " <> path <> " && " <> exe <> " 2>&1 >/dev/null"
+        "cd " <> path <> " && " <> exe <> " init 2>&1 >/dev/null"
 
 -- | Check that a pre-commit hook script is "correct".
 checkPreCommitHook
