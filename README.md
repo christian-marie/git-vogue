@@ -13,24 +13,19 @@ Currently, *git-vogue* supports [hlint][1] and [Stylish Haskell][2].
 Installation
 ------------
 
-(The usage details below are subject to change until *git-vogue* is stabilised and packaged.)
-
 *git-vogue* can be found on Hackage (link TBA) and can be installed with Cabal.
 
 ```bash
 cabal install git-vogue
 ```
 
-Usage
------
-
-Once installed, invoking is as simple as:
+To apply it to your repository, invoke:
 
 ```bash
 git vogue
 ```
 
-By being integrated as a git command option, *git-vogue* is now seamlessly integrated into your git workflow.
+This one time command will setup the git hooks and other requirements to latch itself onto your git hooks. Once installed, *git-vouge*'s functionality is seamlessly integrated into your git workflow, making it an intrinsic part of your development cycle.
 
 Rationale
 ---------
