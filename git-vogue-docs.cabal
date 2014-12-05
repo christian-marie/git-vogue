@@ -23,3 +23,19 @@ executable readme-import
                   , process
   ghc-options:      -threaded
   default-language: Haskell2010  
+
+executable deploy
+  main-is:          deploy.hs
+  hs-source-dirs:   git-vogue-docs
+  build-depends:    base == 4.*
+                  , filepath
+                  , hakyll == 4.6.*
+                  , MissingH
+                  , process
+                  , shelly
+                  , temporary
+                  , text
+                  , time
+                  , transformers
+  ghc-options:      -threaded
+  default-language: Haskell2010  
