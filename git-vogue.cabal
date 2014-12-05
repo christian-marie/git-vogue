@@ -12,7 +12,8 @@ category:            Development
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
-data-files:          templates/pre-commit
+data-files:          templates/pre-commit,
+                     plugins/stylish-haskell
 
 source-repository HEAD
   type: git
