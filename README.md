@@ -1,7 +1,7 @@
 git-vogue
 =========
 
-[![Travis Status](http://img.shields.io/travis/anchor/git-vogue.svg?style=flat)](https://travis-ci.org/anchor/git-vogue)
+[![Travis Status](http://travis-ci.org/anchor/git-vogue.png)](https://travis-ci.org/anchor/git-vogue)
 
 *git-vogue* assists developers to keep their Haskell code ["in vogue"][1].
 
