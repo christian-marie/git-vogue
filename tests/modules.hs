@@ -59,6 +59,17 @@ main = hspec $ do
         it "check fails on exploding module" $
             runCheckExecutor "exploding"
                              (Catastrophe "exploding" "half-life 3 confirmed\n")
+        it "fix fails on failing module" $
+            runFixExecutor "failing"
+                             (Failure "failing" "ohnoes\n")
+
+        it "fix fails on succeeding module" $
+            runFixExecutor "succeeding"
+                             (Success "succeeding" "yay\n")
+
+        it "fix fails on exploding module" $
+            runFixExecutor "exploding"
+                             (Catastrophe "exploding" "half-life 3 confirmed\n")
 
 runCheckExecutor :: FilePath -> Status Check -> Expectation
 runCheckExecutor = runTestExecutor executeCheck
