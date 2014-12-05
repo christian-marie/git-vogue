@@ -71,6 +71,24 @@ doAThing a b c d e f = Frob <$> (sequence . map foop $ [a b c d e f])
 
 Using *git-vogue*, we can determine if given methods are commented in sufficient detail, and if any aren't, it alerts the user and stops the code from being committed.
 
+### "Niceness"
+
+In any given Haskell program, it's safe to say that there is probably a more concise way to do particular things, if only you knew about them.  `hlint` is a good tool for helping to find ways to optimise your syntax, and *git-vogue* makes use of it.
+
+For example, you might have a line somewhere like:
+
+```haskell
+putStrLn . show $ foo
+```
+
+This can be condensed down into the following:
+
+```haskell
+print foo
+```
+
+*git-vogue* will help find these optimisations before you commit your code, enabling you to not just make your code more concise, but also teach you new ways of working so you can become a better developer.
+
 Design Philosophy
 -----------------
 
