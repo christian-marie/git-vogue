@@ -27,7 +27,7 @@ To apply it to your repository, invoke:
 git vogue
 ```
 
-This one time command will setup the git hooks and other requirements to latch itself onto your git hooks. Once installed, *git-vouge*'s functionality is seamlessly integrated into your git workflow, making it an intrinsic part of your development cycle.
+This one time command will setup the git hooks and other requirements to latch itself onto your git hooks. Once installed, *git-vogue*'s functionality is seamlessly integrated into your git workflow, making it an intrinsic part of your development cycle.
 
 Rationale
 ---------
@@ -42,7 +42,7 @@ It's kind of hard to work with other people's code when you're using tabs and th
 
 ### Comments
 
-Nobody comments their code enough to generate decent documentation for it. In fact, sometimes it's difficult to tell what a given method does.  
+Nobody comments their code enough to generate decent documentation for it. In fact, sometimes it's difficult to tell what a given method does.
 
 For example, what we have below doesn't tell us enough about what it does.
 
@@ -95,5 +95,24 @@ print foo
 Design Philosophy
 -----------------
 
+**The interface** is a single named subcommand, one of:
 
+* check
+* fix
+* name
 
+The plugin can assume that it will be running in the top-level directory of the package.
+
+**Rules for each subcommand**
+
+* `check` shall not modify any files
+* `check` may have various return values:
+    * No errors - return code 0
+    * Errors need fixing - return code 1
+    * Catastrophic failure to check - return code 2
+* `fix` is idempotent
+* `fix` may have various return values:
+    * The code is now good (changes may or may not have been made) - return code 0
+    * Some errors remain - return code 1
+    * Catastrophic failure to check - return code 2
+* If `fix` returns "success" (return code 0), `check` must no longer fail
