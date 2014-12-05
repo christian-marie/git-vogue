@@ -68,6 +68,12 @@ doAThing a b c d e f = Frob <$> (sequence . map foop $ [a b c d e f])
 
 Using *git-vogue*, we can determine if given methods are commented in sufficient detail, and if any aren't, it alerts the user and stops the code from being committed.
 
+### Testing
+
+Tests are an indispensable part of writing good software, but they're not very useful unless you remember to run them.
+
+*git-vogue* uses Cabal to run your program's test suite before it's committed to make sure that your code is tested, not just before it can be pushed to the repository, but that it's tested regularly as you work.
+
 ### "Niceness"
 
 In any given Haskell program, it's safe to say that there is probably a more concise way to do particular things, if only you knew about them.  `hlint` is a good tool for helping to find ways to optimise your syntax, and *git-vogue* makes use of it.
