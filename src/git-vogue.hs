@@ -1,6 +1,7 @@
 module Main where
 
 import           Options.Applicative
+import           Options.Applicative.Types
 
 import           Git.Vogue
 
@@ -17,7 +18,7 @@ optionsParser = subparser
         (progDesc "Run fix plugins on a git repo"))
     )
   where
-    pInit = pure CmdInit
+    pInit = CmdInit <$> option (Just <$> readerAsk) ( long "template" <> value Nothing)
     pVerify = pure CmdVerify
     pCheck = pure CmdRunCheck
     pFix = pure CmdRunFix

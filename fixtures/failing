@@ -1,0 +1,8 @@
+#!/bin/sh
+if [ x"$1" = x"name" ]; then
+    echo "failing"
+    exit 0
+else
+    echo "ohnoes"
+    exit 1
+fi

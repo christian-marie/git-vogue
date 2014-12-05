@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE RecordWildCards            #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TypeFamilies               #-}
 
@@ -9,7 +10,6 @@
 -- our instance is simple enough that it is easy to see
 -- they are indeed decidable.
 {-# LANGUAGE UndecidableInstances       #-}
-
 
 module Git.Vogue where
 
@@ -21,6 +21,7 @@ import           Control.Monad.Trans.Class
 import           Control.Monad.Trans.Control
 import           Control.Monad.Trans.Reader
 import           Data.List
+import           Data.Maybe
 import           Data.Monoid
 import           System.Directory
 import           System.Exit
@@ -28,8 +29,7 @@ import           System.FilePath
 import           System.Posix.Files
 import           System.Process
 
---import           Paths_git_vogue
-getDataFileName = undefined
+import           Paths_git_vogue
 
 -- | Command string to insert into pre-commit hooks.
 preCommitCommand :: String
@@ -38,7 +38,7 @@ preCommitCommand = "git-vogue check"
 -- | Commands, with parameters, to be executed.
 data VogueCommand
     -- | Add git-vogue support to a git repository.
-    = CmdInit
+    = CmdInit { templatePath :: Maybe FilePath }
     -- | Verify that support is installed and plugins happen.
     | CmdVerify
     -- | List the plugins that git-vogue knows about.
@@ -82,7 +82,7 @@ runCommand
     :: MonadBaseControl IO m
     => VogueCommand
     -> Vogue m ()
-runCommand CmdInit     = runWithRepoPath gitAddHook
+runCommand CmdInit{..} = runWithRepoPath (gitAddHook templatePath)
 runCommand CmdVerify   = error "Not implemented: verify"
 runCommand CmdList     = error "Not implemented: list"
 runCommand CmdRunCheck = gitListHook
@@ -101,15 +101,19 @@ runWithRepoPath action = do
     action $ trim git_repo
 
 -- | Add the git pre-commit hook.
-gitAddHook :: MonadBaseControl IO m => FilePath -> m ()
-gitAddHook path = liftBase $ do
+gitAddHook
+    :: MonadBaseControl IO m
+    => Maybe FilePath -- ^ Template path
+    -> FilePath -- ^ Hook path
+    -> Vogue m ()
+gitAddHook template path = liftBase $ do
     let hook = path </> ".git" </> "hooks" </> "pre-commit"
     exists <- fileExist hook
     if exists
         then updateHook hook
         else createHook hook
   where
-    createHook = copyHookTemplateTo
+    createHook = copyHookTemplateTo template
     updateHook hook = do
         content <- readFile hook
         unless (preCommitCommand `isInfixOf` content) $ do
@@ -123,10 +127,12 @@ gitAddHook path = liftBase $ do
 
 -- | Copy the template pre-commit hook to a git repo.
 copyHookTemplateTo
-    :: FilePath
+    :: Maybe FilePath
+    -> FilePath
     -> IO ()
-copyHookTemplateTo hook = do
-    template <- getDataFileName "templates/pre-commit"
+copyHookTemplateTo use_template hook = do
+    default_template <- getDataFileName "templates/pre-commit"
+    let template = fromMaybe default_template use_template
     copyFile template hook
     perm <- getPermissions hook
     setPermissions hook $ perm { executable = True }
