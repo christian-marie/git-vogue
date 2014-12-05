@@ -1,0 +1,117 @@
+#!/bin/bash
+
+#set -e # eager bailout
+#set -x # tell me all about what you do
+set -u # use of unset variables is an error
+
+bold=$(tput bold)
+reset=$(tput sgr0)
+
+
+
+hash stylish-haskell
+if [ $? -ne 0 ]; then
+        echo "Couldn't find stylish-haskell, is it installed in your \$PATH?"
+        exit 2
+fi
+
+
+usage() {
+	echo -e "Need one argument as an action. Valid actions are: ${bold}check${reset}, ${bold}fix${reset}, ${bold}name${reset}"
+	exit 2
+}
+
+style() {
+	echo $1
+}
+
+check() {
+	while IFS= read -d $'\0' -r hsfile ; do
+		#printf '*** File found: %s\n' "$hsfile"
+		if grep -q ParseFailed <(stylish-haskell "$hsfile" 2>&1 >/dev/null | head -n1); then
+			return 2
+		fi
+		diff "$hsfile" <(stylish-haskell "$hsfile") >/dev/null
+		ret=$?
+		if [ $ret -ne 0 ]; then
+			return $ret
+		fi
+	done < <(find . -type f -name '*.hs' -print0)
+	return 0
+}
+
+fix() {
+	final_ret=0
+	while IFS= read -d $'\0' -r hsfile ; do
+		#printf '*** File found: %s\n' "$hsfile"
+		if grep -q ParseFailed <(stylish-haskell "$hsfile" 2>&1 >/dev/null | head -n1); then
+			# Some files may have already been fixed before this point.
+			return 2
+		fi
+
+		# XXX: Yes this is awful, but stylish-haskell is fairly cheap to run.
+		diff "$hsfile" <(stylish-haskell "$hsfile") >/dev/null
+		ret=$?
+		if [ $ret -ne 0 ]; then
+			stylish-haskell --inplace "$hsfile"
+			final_ret=1
+		fi
+	done < <(find . -type f -name '*.hs' -print0)
+
+	return $final_ret
+}
+
+name() {
+	echo "vogue-style-haskell runs Stylish Haskell over your codes, lining up your import statements and not much else."
+	return 0
+}
+
+
+
+if [ $# -ne 1 ]; then
+	usage
+fi
+ACTION=$1
+
+case "$ACTION" in
+	check)
+		check
+		ret=$?
+		case "$ret" in
+			0)
+				echo "Check passed"
+				;;
+			1)
+				echo "Some things need fixing"
+				;;
+			*)
+				echo "Catastrophic failure in parsing"
+				;;
+		esac
+		exit $ret
+		;;
+	fix)
+		fix
+		ret=$?
+		case "$ret" in
+			0)
+				echo "No fixing needed"
+				;;
+			1)
+				echo "Fixed some stuff"
+				;;
+			*)
+				echo "Catastrophic failure in parsing"
+				;;
+		esac
+		exit $ret
+		;;
+	name)
+		name
+		ret=$?
+		exit $ret
+		;;
+	*)
+		echo "wat r u doing? ${bold}${ACTION}${reset} is not a recognised action."
+		usage
+esac
