@@ -15,12 +15,21 @@ category:            Development
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
+data-files:          templates/pre-commit
 
 library
   default-language:    Haskell2010
   hs-source-dirs:      lib
   exposed-modules:     Git.Vogue
+  other-modules:       Paths_git_vogue
   build-depends:       base >=4.7 && <4.8
+                     , directory
+                     , filepath
+                     , monad-control
+                     , process
+                     , transformers
+                     , transformers-base
+                     , unix
 
 executable git-vogue
   default-language:    Haskell2010
@@ -28,6 +37,7 @@ executable git-vogue
   main-is:             git-vogue.hs
   build-depends:       base >=4.7 && <4.8
                      , git-vogue
+                     , optparse-applicative
 
 test-suite test-git-setup
   type:                exitcode-stdio-1.0
