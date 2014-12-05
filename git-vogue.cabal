@@ -20,7 +20,12 @@ library
   default-language:    Haskell2010
   hs-source-dirs:      lib
   exposed-modules:     Git.Vogue
+                       Git.Vogue.Types
+                       Git.Vogue.Modules
   build-depends:       base >=4.7 && <4.8
+                     , text
+                     , MissingH
+                     , process                     
 
 executable git-vogue
   default-language:    Haskell2010
@@ -55,10 +60,8 @@ test-suite test-modules
                      , hspec
                      , lifted-base
                      , monad-control
-                     , filepath
-                     , MissingH
+                     , filepath                     
                      , transformers
                      , transformers-base
                      , unix
-                     , process
-                     , text
+                     , process                     
