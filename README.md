@@ -7,7 +7,7 @@ git-vogue
 
 This package defines a list of commands to check code quality, comments, and formatting continually. *git-vogue* will set up your repository to run all command pairs on commit, giving instant feedback on the quality of code, and helping fix issues more quickly.
 
-Currently, *git-vogue* supports [hlint][2], [hspec][3] and [Stylish Haskell][4].
+Currently, *git-vogue* will support [hlint][2], [hspec][3] and [Stylish Haskell][4].
 
 [1]: https://www.youtube.com/watch?v=GuJQSAiODqI
 [2]: http://hackage.haskell.org/package/hlint
