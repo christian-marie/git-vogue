@@ -1,11 +1,25 @@
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TypeFamilies               #-}
+
+-- This is for MonadBaseControl
+-- our instance is simple enough that it is easy to see
+-- they are indeed decidable.
+{-# LANGUAGE UndecidableInstances       #-}
+
+
 module Git.Vogue where
 
+import           Control.Applicative
 import           Control.Monad
 import           Control.Monad.Base
-import           Control.Monad.IO.Class      ()
+import           Control.Monad.IO.Class
+import           Control.Monad.Trans.Class
 import           Control.Monad.Trans.Control
+import           Control.Monad.Trans.Reader
 import           Data.List
 import           Data.Monoid
 import           System.Directory
@@ -14,7 +28,8 @@ import           System.FilePath
 import           System.Posix.Files
 import           System.Process
 
-import           Paths_git_vogue
+--import           Paths_git_vogue
+getDataFileName = undefined
 
 -- | Command string to insert into pre-commit hooks.
 preCommitCommand :: String
@@ -26,20 +41,45 @@ data VogueCommand
     = CmdInit
     -- | Verify that support is installed and plugins happen.
     | CmdVerify
+    -- | List the plugins that git-vogue knows about.
+    | CmdList
     -- | Run check plugins on a git repository.
     | CmdRunCheck
     -- | Run fix plugins on a git repository.
     | CmdRunFix
   deriving (Eq, Show)
 
+-- | Plugins that git-vogue knows about.
+--   FIXME: this will become the fix/check modules
+--
+type Plugin = String
+
+newtype Vogue m x = Vogue { vogue :: ReaderT [Plugin] m x }
+  deriving ( Functor, Applicative, Monad
+           , MonadTrans, MonadIO )
+
+deriving instance MonadBase b m => MonadBase b (Vogue m)
+
+instance MonadTransControl Vogue where
+  data StT Vogue a = StVogue { unStVogue :: StT (ReaderT [Plugin]) a }
+  liftWith = defaultLiftWith Vogue vogue StVogue
+  restoreT = defaultRestoreT Vogue unStVogue
+
+instance MonadBaseControl b m => MonadBaseControl b (Vogue m) where
+  newtype StM (Vogue m) a = StMT { unStMT :: ComposeSt Vogue m a }
+  liftBaseWith            = defaultLiftBaseWith StMT
+  restoreM                = defaultRestoreM     unStMT
+
 -- | Execute a git-vogue command.
 runCommand
-    :: VogueCommand
-    -> IO ()
-runCommand CmdInit = runWithRepoPath gitAddHook
-runCommand CmdVerify = error "Not implemented: verify"
+    :: MonadBaseControl IO m
+    => VogueCommand
+    -> Vogue m ()
+runCommand CmdInit     = runWithRepoPath gitAddHook
+runCommand CmdVerify   = error "Not implemented: verify"
+runCommand CmdList     = error "Not implemented: list"
 runCommand CmdRunCheck = error "Not implemented: check"
-runCommand CmdRunFix = error "Not implemented: fix"
+runCommand CmdRunFix   = error "Not implemented: fix"
 
 -- | Find the git repository path and pass it to an action.
 --
@@ -54,8 +94,8 @@ runWithRepoPath action = do
     action $ trim git_repo
 
 -- | Add the git pre-commit hook.
-gitAddHook :: FilePath -> IO ()
-gitAddHook path = do
+gitAddHook :: MonadBaseControl IO m => FilePath -> m ()
+gitAddHook path = liftBase $ do
     let hook = path </> ".git" </> "hooks" </> "pre-commit"
     exists <- fileExist hook
     if exists
@@ -83,6 +123,13 @@ copyHookTemplateTo hook = do
     copyFile template hook
     perm <- getPermissions hook
     setPermissions hook $ perm { executable = True }
+
+gitListHook :: MonadBaseControl IO m => Vogue m ()
+gitListHook = do
+  plugins <- Vogue ask
+  liftBase $  putStrLn
+           $  "git-vogue knows about the following plugins: "
+           <> show plugins
 
 -- | Trim whitespace from a string.
 trim :: String -> String
