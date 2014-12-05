@@ -1,9 +1,11 @@
 git-vogue
 =========
 
-git-vogue make your Haskell git repositories fashionable.
+*git-vogue* helps developers to add git hooks to their Haskell repository, to ensure quality of their code.
 
-We all know that we *should* be using tools like [hlint][1] and [Stylish Haskell][2], but how often do you really do it? git-vogue makes it trivial to do the right thing, set it up once then reap the benefits forever.
+It defines a list of commands to check code quality, paired with another command to fix problems that arise from that check. *git-vogue* will set up your repository to run all command pairs on commit, giving instant feedback on the quality of code, and helping fix issues more quickly.
+
+Currently, *git-vogue* supports [hlint][1] and [Stylish Haskell][2].
 
 [1]: http://hackage.haskell.org/package/hlint
 [2]: https://hackage.haskell.org/package/stylish-haskell
