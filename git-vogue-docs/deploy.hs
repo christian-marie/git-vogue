@@ -14,9 +14,6 @@ main = do
     deploySite
     putStrLn "Deployed."
 
-sourceRepository :: String
-sourceRepository = "anchor/git-vogue"
-
 targetRepository :: String
 targetRepository = "rtrvrtg/git-vogue"
 
@@ -36,13 +33,14 @@ deploySite = withSystemTempDirectory "git-vogue-deploy" deploy
         return ()
     shrun t shfp = do
         let dest_fp = fromText shfp
+        let repo = "git@github.com:" ++ targetRepository ++ ".git"
         void $ cp_r (fromText . pack $ "_site") dest_fp
         chdir dest_fp $ do
             _ <- sequence . map runCmd $ [
                 ("git",["init"]),
                 ("git",["add","."]),
                 ("git",["commit","-m","Site updated at " ++ show t]),
-                ("git",["remote","add","origin","git@github.com:" ++ targetRepository ++ ".git"]),
+                ("git",["remote","add","origin",repo]),
                 ("git",["push","origin","master:gh-pages","--force"])]
             return ()
         return shfp
