@@ -53,7 +53,7 @@ Design Philosophy
 
 The plugin can assume that it will be running in the top-level directory of the package.
 
-**Rules for each subcommand**
+**Rules for each module**
 
 * `check` shall not modify any files
 * `check` may have various return values:
