@@ -35,12 +35,13 @@ test-suite test-git-setup
   hs-source-dirs:      tests
   main-is:             git-setup.hs
   build-depends:       base >=4.7 && <4.8
+                     , directory
+                     , filepath
                      , git-vogue
                      , hspec
-                     , filepath
                      , lifted-base
                      , monad-control
+                     , process
                      , transformers
                      , transformers-base
                      , unix
-                     , process
