@@ -68,7 +68,7 @@ Using *git-vogue*, we can determine if given methods are commented in sufficient
 
 ### Testing
 
-Tests are an indispensable part of writing good software, but they're not very useful unless you remember to run them.
+Tests are an indispensable part of writing good software, but they're not very useful unless you remember to run them. Even the best among us sometimes forget, so sometimes it's important to get in the way and make sure only valid code is committed.
 
 *git-vogue* uses Cabal to run your program's test suite before it's committed to make sure that your code is tested, not just before it can be pushed to the repository, but that it's tested regularly as you work.
 
