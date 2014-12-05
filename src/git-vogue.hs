@@ -32,7 +32,7 @@ main = do
   runVogue plugins (runCommand cmd)
   where
     -- FIXME: read plugins from config
-    plugins = ["stylish-haskell"]
+    plugins = ["git-vogue-stylish-haskell"]
     opts = info (helper <*> optionsParser)
       ( fullDesc
      <> progDesc "Make your Haskell git repository fashionable"
