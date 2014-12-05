@@ -27,7 +27,7 @@ To apply it to your repository, invoke:
 git vogue
 ```
 
-This one time command will setup the git hooks and other requirements to latch itself onto your git hooks. Once installed, *git-vouge*'s functionality is seamlessly integrated into your git workflow, making it an intrinsic part of your development cycle.
+This one time command will setup the git hooks and other requirements to latch itself onto your git hooks. Once installed, *git-vogue*'s functionality is seamlessly integrated into your git workflow, making it an intrinsic part of your development cycle.
 
 Rationale
 ---------
