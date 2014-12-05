@@ -1,6 +1,8 @@
 git-vogue
 =========
 
+[![Travis Status](http://img.shields.io/travis/anchor/git-vogue.svg?style=flat)](https://travis-ci.org/anchor/git-vogue)
+
 *git-vogue* helps developers to add git hooks to their Haskell repository, to ensure quality of their code.
 
 It defines a list of commands to check code quality, paired with another command to fix problems that arise from that check. *git-vogue* will set up your repository to run all command pairs on commit, giving instant feedback on the quality of code, and helping fix issues more quickly.
@@ -65,6 +67,12 @@ doAThing a b c d e f = Frob <$> (sequence . map foop $ [a b c d e f])
 ```
 
 Using *git-vogue*, we can determine if given methods are commented in sufficient detail, and if any aren't, it alerts the user and stops the code from being committed.
+
+### Testing
+
+Tests are an indispensable part of writing good software, but they're not very useful unless you remember to run them. Even the best among us sometimes forget, so sometimes it's important to get in the way and make sure only valid code is committed.
+
+*git-vogue* uses Cabal to run your program's test suite before it's committed to make sure that your code is tested, not just before it can be pushed to the repository, but that it's tested regularly as you work.
 
 ### "Niceness"
 
