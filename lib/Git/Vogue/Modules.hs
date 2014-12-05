@@ -44,7 +44,7 @@ checkModules'
     => [Plugin]
     -> m ()
 checkModules' ps = liftIO $ do
-    st <- fixModules ioModuleExecutorImpl ps
+    st <- checkModules ioModuleExecutorImpl ps
     case st of
         Success{} ->
             exitSuccess
@@ -60,7 +60,7 @@ fixModules'
     => [Plugin]
     -> m ()
 fixModules' ps = liftIO $ do
-    st <- checkModules ioModuleExecutorImpl ps
+    st <- fixModules ioModuleExecutorImpl ps
     case st of
         Success _ output -> do
             T.putStrLn output
