@@ -62,6 +62,11 @@ fix() {
 }
 
 name() {
+	echo "Stylish Haskell"
+	return 0
+}
+
+description() {
 	echo "vogue-style-haskell runs Stylish Haskell over your codes, lining up your import statements and not much else."
 	return 0
 }

@@ -13,7 +13,7 @@ build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
 data-files:          templates/pre-commit,
-                     plugins/stylish-haskell
+                     plugins/git-vogue-stylish-haskell
 
 source-repository HEAD
   type: git
