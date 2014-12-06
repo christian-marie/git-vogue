@@ -42,16 +42,16 @@ Nobody formats their code quite the same way, making it difficult for developers
 
 To make things easier for everyone (including yourself), we've set up *git-vogue* to use **Stylish Haskell** to check if your code conforms to a given format. If it doesn't, your commit will not be allowed to be pushed upstream, and you will instead receive a number of recommeded changes.
 
-Design Philosophy
+Plugin design
 -----------------
 
-**The interface** is a single named subcommand, one of:
+**The interface** for an executable is a single argument, one of:
 
 * check
 * fix
 * name
 
-The plugin can assume that it will be running in the top-level directory of the package.
+The plugin can assume that the CWD will be set to the top-level directory of the package.
 
 **Rules for each plugin**
 
