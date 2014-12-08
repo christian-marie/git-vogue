@@ -2,7 +2,7 @@ module Main where
 
 import Control.Monad
 import Control.Monad.IO.Class
-import Data.Text hiding (map)
+import Data.Text hiding (drop,head,map)
 import Data.Time
 import Shelly
 import System.IO.Temp
@@ -37,15 +37,15 @@ deploySite = withSystemTempDirectory "git-vogue-deploy" deploy
         void $ cp_r (fromText . pack $ "_site") dest_fp
         chdir dest_fp $ do
             _ <- sequence . map runCmd $ [
-                ("git",["init"]),
-                ("git",["add","."]),
-                ("git",["commit","-m","Site updated at " ++ show t]),
-                ("git",["remote","add","origin",repo]),
-                ("git",["push","origin","master:gh-pages","--force"])]
+                ["git","init"],
+                ["git","add","."],
+                ["git","commit","-m","Site updated at " ++ show t],
+                ["git","remote","add","origin",repo],
+                ["git","push","origin","master:gh-pages","--force"] ]
             return ()
         return shfp
 
-runCmd :: (String, [String]) -> ShIO ()
-runCmd (c,p) = do
-    _ <- run (fromText . pack $ c) (map pack p)
+runCmd :: [String] -> ShIO ()
+runCmd a = do
+    _ <- run (fromText . pack . head $ a) (map pack . drop 1 $ a)
     return ()
