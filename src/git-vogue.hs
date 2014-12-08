@@ -2,10 +2,15 @@
 
 module Main where
 
+import           Control.Exception
+import           Data.String
 import           Options.Applicative
 import           Options.Applicative.Types
+import           System.Environment
+import           System.FilePath
 
 import           Git.Vogue
+import           Git.Vogue.Types
 
 -- | Parse command line options.
 optionsParser :: Parser VogueCommand
@@ -20,19 +25,33 @@ optionsParser = subparser
         (progDesc "Run fix plugins on a git repo"))
     )
   where
-    pInit = CmdInit <$> option (Just <$> readerAsk) ( long "template" <> value Nothing)
+    pInit = CmdInit <$> option (Just <$> readerAsk)
+        (  long "template"
+        <> value Nothing
+        )
     pVerify = pure CmdVerify
     pCheck = pure CmdRunCheck
     pFix = pure CmdRunFix
+
+-- | Find the list of plugin names.
+loadPlugins :: IO [Plugin]
+loadPlugins = catch config_plugins default_plugins
+  where
+    config_plugins = map fromString . lines <$> (configFile "vogue.plugins" >>= readFile)
+    default_plugins (SomeException _) = return ["git-vogue-stylish-haskell"]
+
+configFile :: FilePath -> IO FilePath
+configFile path = do
+    home_dir <- getEnv "HOME"
+    return $ home_dir </> ".config" </> "git" </> path
 
 -- | Parse the command line and run the command.
 main :: IO ()
 main = do
   cmd <- execParser opts
+  plugins <- loadPlugins
   runVogue plugins (runCommand cmd)
   where
-    -- FIXME: read plugins from config
-    plugins = ["git-vogue-stylish-haskell"]
     opts = info (helper <*> optionsParser)
       ( fullDesc
      <> progDesc "Make your Haskell git repository fashionable"
