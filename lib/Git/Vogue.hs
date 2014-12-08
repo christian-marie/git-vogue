@@ -15,10 +15,8 @@ module Git.Vogue where
 
 import           Control.Applicative
 import           Control.Monad
-import           Control.Monad.Base
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Class
-import           Control.Monad.Trans.Control
 import           Control.Monad.Trans.Reader
 import           Data.List
 import           Data.Maybe
@@ -58,18 +56,6 @@ newtype Vogue m x = Vogue { vogue :: ReaderT [Plugin] m x }
   deriving ( Functor, Applicative, Monad
            , MonadTrans, MonadIO )
 
-deriving instance MonadBase b m => MonadBase b (Vogue m)
-
-instance MonadTransControl Vogue where
-  data StT Vogue a = StVogue { unStVogue :: StT (ReaderT [Plugin]) a }
-  liftWith = defaultLiftWith Vogue vogue StVogue
-  restoreT = defaultRestoreT Vogue unStVogue
-
-instance MonadBaseControl b m => MonadBaseControl b (Vogue m) where
-  newtype StM (Vogue m) a = StMT { unStMT :: ComposeSt Vogue m a }
-  liftBaseWith            = defaultLiftBaseWith StMT
-  restoreM                = defaultRestoreM     unStMT
-
 -- | Execute a Vogue program
 runVogue
     :: [Plugin]
@@ -79,7 +65,7 @@ runVogue ps (Vogue act) = runReaderT act ps
 
 -- | Execute a git-vogue command.
 runCommand
-    :: MonadBaseControl IO m
+    :: MonadIO m
     => VogueCommand
     -> Vogue m ()
 runCommand CmdInit{..} = runWithRepoPath (gitAddHook templatePath)
@@ -87,30 +73,30 @@ runCommand CmdVerify   = error "Not implemented: verify"
 runCommand CmdList     = gitListHook
 runCommand CmdRunCheck = do
     plugins <- Vogue ask
-    liftBase $ checkModules' plugins
+    liftIO $ checkModules' plugins
 runCommand CmdRunFix   = do
     plugins <- Vogue ask
-    liftBase $ fixModules' plugins
+    liftIO $ fixModules' plugins
 
 -- | Find the git repository path and pass it to an action.
 --
 -- Throws an error if the PWD is not in a git repo.
 runWithRepoPath
-    :: MonadBaseControl IO m
+    :: MonadIO m
     => (FilePath -> m a)
     -> m a
 runWithRepoPath action = do
     -- Get the path to the git repo top-level directory.
-    git_repo <- liftBase $ readProcess "git" ["rev-parse", "--show-toplevel"] ""
+    git_repo <- liftIO $ readProcess "git" ["rev-parse", "--show-toplevel"] ""
     action $ trim git_repo
 
 -- | Add the git pre-commit hook.
 gitAddHook
-    :: MonadBaseControl IO m
+    :: MonadIO m
     => Maybe FilePath -- ^ Template path
-    -> FilePath -- ^ Hook path
+    -> FilePath       -- ^ Hook path
     -> Vogue m ()
-gitAddHook template path = liftBase $ do
+gitAddHook template path = liftIO $ do
     let hook = path </> ".git" </> "hooks" </> "pre-commit"
     exists <- fileExist hook
     if exists
@@ -141,12 +127,12 @@ copyHookTemplateTo use_template hook = do
     perm <- getPermissions hook
     setPermissions hook $ perm { executable = True }
 
-gitListHook :: MonadBaseControl IO m => Vogue m ()
+gitListHook :: MonadIO m => Vogue m ()
 gitListHook = do
   plugins <- Vogue ask
-  liftBase $  putStrLn
-           $  "git-vogue knows about the following plugins: "
-           <> show plugins
+  liftIO $  putStrLn
+         $  "git-vogue knows about the following plugins: "
+         <> show plugins
 
 -- | Trim whitespace from a string.
 trim :: String -> String
