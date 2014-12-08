@@ -40,8 +40,9 @@ optionsParser = subparser
 
 -- | Discover all available plugins.
 --
--- This function inspects the ../libexec/git-vogue directory or, if defined, the
--- directories listed in the $GIT_VOGUE_PATH environmental variable.
+-- This function inspects the $PREFIX/libexec/git-vogue directory or, if
+-- defined, the directories listed in the $GIT_VOGUE_PATH environmental
+-- variable.
 discoverPlugins :: IO [Plugin]
 discoverPlugins = do
     libexec <- Paths.getLibexecDir
@@ -53,7 +54,7 @@ discoverPlugins = do
         return . map fromString
   where
     dir :: FilePath -> IO [FilePath]
-    dir p = getDirectoryContents p >>= return . map (p </>)
+    dir p = map (p </>) <$> getDirectoryContents p
     isExecutable :: FilePath -> IO Bool
     isExecutable p = executable <$> getPermissions p
 
