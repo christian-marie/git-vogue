@@ -27,11 +27,12 @@ library
                        Git.Vogue.Modules
   other-modules:       Paths_git_vogue
   build-depends:       base >=4.7 && <4.8
+                     , MissingH
                      , directory
                      , filepath
-                     , MissingH
                      , monad-control
                      , process
+                     , split
                      , text
                      , transformers
                      , transformers-base
@@ -43,8 +44,10 @@ executable git-vogue
   main-is:             git-vogue.hs
   build-depends:       base >=4.7 && <4.8
                      , filepath
+                     , directory
                      , git-vogue
                      , optparse-applicative >= 0.11
+                     , split
 
 test-suite test-git-setup
   type:                exitcode-stdio-1.0

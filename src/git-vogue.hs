@@ -2,15 +2,20 @@
 
 module Main where
 
-import           Control.Exception
+import           Control.Monad
+import           Data.List.Split
+import           Data.Maybe
 import           Data.String
 import           Options.Applicative
 import           Options.Applicative.Types
+import           System.Directory
 import           System.Environment
 import           System.FilePath
 
 import           Git.Vogue
 import           Git.Vogue.Types
+
+import qualified Paths_git_vogue           as Paths
 
 -- | Parse command line options.
 optionsParser :: Parser VogueCommand
@@ -33,23 +38,30 @@ optionsParser = subparser
     pCheck = pure CmdRunCheck
     pFix = pure CmdRunFix
 
--- | Find the list of plugin names.
-loadPlugins :: IO [Plugin]
-loadPlugins = catch config_plugins default_plugins
+-- | Discover all available plugins.
+--
+-- This function inspects the ../libexec/git-vogue directory or, if defined, the
+-- directories listed in the $GIT_VOGUE_PATH environmental variable.
+discoverPlugins :: IO [Plugin]
+discoverPlugins = do
+    libexec <- Paths.getLibexecDir
+    path <- fromMaybe (libexec </> "git-vogue") <$> lookupEnv "GIT_VOGUE_PATH"
+    filterM doesDirectoryExist (splitOn ":" path) >>=
+        mapM dir >>=
+        return . concat >>=
+        filterM isExecutable >>=
+        return . map fromString
   where
-    config_plugins = map fromString . lines <$> (configFile "vogue.plugins" >>= readFile)
-    default_plugins (SomeException _) = return ["git-vogue-stylish-haskell"]
-
-configFile :: FilePath -> IO FilePath
-configFile path = do
-    home_dir <- getEnv "HOME"
-    return $ home_dir </> ".config" </> "git" </> path
+    dir :: FilePath -> IO [FilePath]
+    dir p = getDirectoryContents p >>= return . map (p </>)
+    isExecutable :: FilePath -> IO Bool
+    isExecutable p = executable <$> getPermissions p
 
 -- | Parse the command line and run the command.
 main :: IO ()
 main = do
   cmd <- execParser opts
-  plugins <- loadPlugins
+  plugins <- discoverPlugins
   runVogue plugins (runCommand cmd)
   where
     opts = info (helper <*> optionsParser)
