@@ -9,7 +9,7 @@ author:              Anchor Engineering <engineering@anchor.com.au>
 maintainer:          Anchor Engineering <engineering@anchor.com.au>
 copyright:           (c) 2014 Anchor Systems, Pty Ltd and Others
 category:            Development
-build-type:          Simple
+build-type:          Custom
 extra-source-files:  README.md
 cabal-version:       >=1.10
 data-files:          templates/pre-commit,
@@ -35,7 +35,6 @@ library
                      , transformers
                      , unix
 
-
 executable git-vogue
   default-language:    Haskell2010
   hs-source-dirs:      src
@@ -43,6 +42,15 @@ executable git-vogue
   build-depends:       base >=4.7 && <4.8
                      , git-vogue
                      , optparse-applicative >= 0.11
+
+executable git-vogue-cabal
+  default-language:    Haskell2010
+  hs-source-dirs:      src
+  main-is:             git-vogue-cabal.hs
+  build-depends:       base >=4.7 && <4.8
+                     , git-vogue
+                     , optparse-applicative >= 0.11
+                     , process
 
 test-suite test-git-setup
   type:                exitcode-stdio-1.0
@@ -60,6 +68,7 @@ test-suite test-git-setup
                      , transformers
                      , transformers-base
                      , unix
+
 test-suite test-modules
   type:                exitcode-stdio-1.0
   default-language:    Haskell2010
