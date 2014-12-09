@@ -19,8 +19,8 @@ execute
     :: Command
     -> IO ()
 execute cmd = case cmd of
-    CmdName  -> putStrLn "cabal"
-    CmdCheck -> run "cabal" ["check"]
+    CmdName  -> putStrLn "hlint"
+    CmdCheck -> run "hlint" ["./"]
     CmdFix   -> exitFailure
   where
     run prog args = spawnProcess prog args >>= waitForProcess >>= exitWith

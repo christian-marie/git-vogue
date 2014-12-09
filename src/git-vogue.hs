@@ -49,19 +49,22 @@ discoverPlugins = do
     -- the search path.
     path <- fromMaybe "" <$> lookupEnv "GIT_VOGUE_PATH"
     libexec <- (</> "git-vogue") <$> Paths.getLibexecDir
-    let directories = (splitOn ":" path) ++ [libexec]
+    let directories = splitOn ":" path ++ [libexec]
 
     -- Find all executables in the directories in path.
-    filterM doesDirectoryExist directories >>=
-        mapM ls >>=
-        return . concat >>=
-        filterM isExecutable >>=
-        return . map fromString
+    liftM (map fromString)
+        (mapM ls directories >>= concatM >>= filterM isExecutable)
   where
     ls :: FilePath -> IO [FilePath]
-    ls p = map (p </>) <$> getDirectoryContents p
+    ls p = do
+        exists <- doesDirectoryExist p
+        if exists
+            then map (p </>) <$> getDirectoryContents p
+            else return []
     isExecutable :: FilePath -> IO Bool
     isExecutable p = executable <$> getPermissions p
+    concatM :: Monad m => [[a]] -> m [a]
+    concatM = return . concat
 
 -- | Parse the command line and run the command.
 main :: IO ()

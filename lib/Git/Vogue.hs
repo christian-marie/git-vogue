@@ -3,13 +3,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE RecordWildCards            #-}
-{-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TypeFamilies               #-}
-
--- This is for MonadBaseControl
--- our instance is simple enough that it is easy to see
--- they are indeed decidable.
-{-# LANGUAGE UndecidableInstances       #-}
 
 module Git.Vogue where
 

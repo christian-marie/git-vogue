@@ -23,12 +23,7 @@ main = hspec . describe "Git repository setup" $ do
         withGitRepo $ \path -> do
             let hook = path </> ".git" </> "hooks" </> "pre-commit"
 
-            -- Run the setup program.
-            code <- runInRepo path
-            code `shouldBe` ExitSuccess
-
-            -- Check that it worked.
-            checkPreCommitHook hook
+            shouldInstallWorking path hook
 
     it "should skip an already correct pre-commit hook" $
         withGitRepo $ \path -> do
@@ -37,12 +32,7 @@ main = hspec . describe "Git repository setup" $ do
             -- Create an existing hook to update.
             copyHookTemplateTo (Just "templates/pre-commit") hook
 
-            -- Run the setup program.
-            code <- runInRepo path
-            code `shouldBe` ExitSuccess
-
-            -- Check that it worked.
-            checkPreCommitHook hook
+            shouldInstallWorking path hook
 
     it "should report a conflict pre-commit hook" $
         withGitRepo $ \path -> do
@@ -57,7 +47,13 @@ main = hspec . describe "Git repository setup" $ do
 
             -- Run the setup program.
             code <- runInRepo path
-            code `shouldBe` (ExitFailure 1)
+            code `shouldBe` ExitFailure 1
+
+-- | Run "git-vogue init" and check we wind up with a working pre-commit hook.
+shouldInstallWorking path hook = do
+    code <- runInRepo path
+    code `shouldBe` ExitSuccess
+    checkPreCommitHook hook
 
 -- | Execute the setup command in a git repository.
 runInRepo
