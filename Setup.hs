@@ -52,6 +52,8 @@ tweakSubcommandInstall
 tweakSubcommandInstall pkg lbi =
     let pkg' = pkg { executables = tail $ executables pkg }
         lbi' = lbi { installDirTemplates = (installDirTemplates lbi)
-                        { bindir = libexecdir $ installDirTemplates lbi }
+                        { bindir = suffixIt . libexecdir $ installDirTemplates lbi }
                    }
     in (pkg', lbi')
+  where
+    suffixIt = toPathTemplate . (</> "git-vogue") . fromPathTemplate
