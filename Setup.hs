@@ -10,6 +10,7 @@ import           Distribution.Simple
 import           Distribution.Simple.Install
 import           Distribution.Simple.LocalBuildInfo
 import           Distribution.Simple.Setup
+import           Distribution.Simple.Utils
 import           System.Directory
 import           System.FilePath
 
@@ -37,9 +38,30 @@ copyThings pkg lbi _ flags = do
     let (sub_pkg, sub_lbi) = tweakSubcommandInstall pkg lbi
     install sub_pkg sub_lbi flags
 
+    -- Install shell scripts from plugins/.
+    --
+    -- This was stolen from "Distribution.Simple.Install" and hacked. Why is
+    -- cabal so terrible compared to make and friends?
+    let scripts = map stripPluginPrefix . filter isPlugin $ dataFiles pkg
+        paths = absoluteInstallDirs sub_pkg sub_lbi $ fromFlag (copyDest flags)
+        verbosity = fromFlag (copyVerbosity flags)
+    flip mapM_ scripts $ \ file -> do
+        let srcDataDir = dataDir sub_pkg
+        let destDataDir = datadir paths
+        files <- matchDirFileGlob srcDataDir file
+        let dir = takeDirectory file
+        createDirectoryIfMissingVerbose verbosity True (destDataDir </> dir)
+        sequence_ [ installExecutableFile verbosity (srcDataDir  </> file')
+                                                    (destDataDir </> file')
+                  | file' <- files ]
+
+
 -- | Directory our plugin scripts are kept in.
 pluginPrefix :: FilePath
 pluginPrefix = "plugins/"
+
+stripPluginPrefix :: FilePath -> FilePath
+stripPluginPrefix = dropWhile (== '/') . dropWhile (/= '/')
 
 -- | A data file is in the plugins directory.
 isPlugin :: FilePath -> Bool
@@ -66,7 +88,7 @@ tweakSubcommandInstall
 tweakSubcommandInstall pkg lbi =
     let dest = suffixIt . libexecdir $ installDirTemplates lbi
         pkg' = pkg { executables = tail $ executables pkg
-                   , dataFiles = map stripPrefix . filter isPlugin $ dataFiles pkg
+                   , dataFiles = []
                    , dataDir = dataDir pkg </> pluginPrefix
                    , library = Nothing
                    , testSuites = []
@@ -84,4 +106,3 @@ tweakSubcommandInstall pkg lbi =
     in (pkg', lbi')
   where
     suffixIt = toPathTemplate . (</> "git-vogue") . fromPathTemplate
-    stripPrefix = dropWhile (== '/') . dropWhile (/= '/')
