@@ -3,11 +3,8 @@
 -- | Description: Test git repository setup.
 module Main where
 
-import           Control.Exception.Lifted
+import           Control.Exception
 import           Control.Monad
-import           Control.Monad.Base
-import           Control.Monad.IO.Class      ()
-import           Control.Monad.Trans.Control
 import           Data.List
 import           Data.Monoid
 import           System.Directory
@@ -94,14 +91,13 @@ checkPreCommitHook hook = do
 
 -- | Create a git repository and run an action with it.
 withGitRepo
-    :: MonadBaseControl IO m
-    => (FilePath -> m ())
-    -> m ()
+    :: (FilePath -> IO ())
+    -> IO ()
 withGitRepo = bracket createRepo deleteRepo
   where
     createRepo = do
-        path <- liftBase $ mkdtemp "/tmp/git-setup-test."
-        liftBase $ callProcess "git" ["init", path]
+        path <- mkdtemp "/tmp/git-setup-test."
+        callProcess "git" ["init", path]
         return path
     deleteRepo path =
-        liftBase $ callProcess "rm" ["-rf", path]
+        callProcess "rm" ["-rf", path]

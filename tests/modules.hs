@@ -4,15 +4,9 @@
 -- | Description: Test git repository setup.
 module Main where
 
-import           Control.Exception.Lifted
-import           Control.Monad.Base
 import           Control.Monad.IO.Class      ()
-import           Control.Monad.Trans.Control
 import           Data.Monoid
-import           System.Exit
-import           System.FilePath.Posix
-import           System.Posix.Temp
-import           System.Process
+import           System.FilePath
 import           Test.Hspec
 
 import           Git.Vogue.Modules
@@ -82,6 +76,6 @@ runTestExecutor
     -> FilePath
     -> Status a
     -> Expectation
-runTestExecutor act mod expected =
-    act ioModuleExecutorImpl (Plugin ("fixtures" </> mod))
+runTestExecutor act file expected =
+    act ioModuleExecutorImpl (Plugin ("fixtures" </> file))
       >>= (`shouldBe` expected)

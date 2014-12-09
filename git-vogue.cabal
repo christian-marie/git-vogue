@@ -27,10 +27,11 @@ library
                        Git.Vogue.Modules
   other-modules:       Paths_git_vogue
   build-depends:       base >=4.7 && <4.8
+                     , MissingH
                      , directory
                      , filepath
-                     , MissingH
                      , process
+                     , split
                      , text
                      , transformers
                      , unix
@@ -40,8 +41,11 @@ executable git-vogue
   hs-source-dirs:      src
   main-is:             git-vogue.hs
   build-depends:       base >=4.7 && <4.8
+                     , filepath
+                     , directory
                      , git-vogue
                      , optparse-applicative >= 0.11
+                     , split
 
 executable git-vogue-cabal
   default-language:    Haskell2010
@@ -62,11 +66,8 @@ test-suite test-git-setup
                      , filepath
                      , git-vogue
                      , hspec
-                     , lifted-base
-                     , monad-control
                      , process
                      , transformers
-                     , transformers-base
                      , unix
 
 test-suite test-modules
@@ -75,12 +76,10 @@ test-suite test-modules
   hs-source-dirs:      tests
   main-is:             modules.hs
   build-depends:       base >=4.7 && <4.8
+                     , filepath
                      , git-vogue
                      , hspec
-                     , lifted-base
-                     , monad-control
-                     , filepath
+                     , process
                      , transformers
                      , transformers-base
                      , unix
-                     , process
