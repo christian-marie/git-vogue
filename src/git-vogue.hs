@@ -45,16 +45,21 @@ optionsParser = subparser
 -- variable.
 discoverPlugins :: IO [Plugin]
 discoverPlugins = do
-    libexec <- Paths.getLibexecDir
-    path <- fromMaybe (libexec </> "git-vogue") <$> lookupEnv "GIT_VOGUE_PATH"
-    filterM doesDirectoryExist (splitOn ":" path) >>=
-        mapM dir >>=
+    -- Use the environmental variable and $libexec/git-vogue/ directories as
+    -- the search path.
+    path <- fromMaybe "" <$> lookupEnv "GIT_VOGUE_PATH"
+    libexec <- (</> "git-vogue") <$> Paths.getLibexecDir
+    let directories = (splitOn ":" path) ++ [libexec]
+
+    -- Find all executables in the directories in path.
+    filterM doesDirectoryExist directories >>=
+        mapM ls >>=
         return . concat >>=
         filterM isExecutable >>=
         return . map fromString
   where
-    dir :: FilePath -> IO [FilePath]
-    dir p = map (p </>) <$> getDirectoryContents p
+    ls :: FilePath -> IO [FilePath]
+    ls p = map (p </>) <$> getDirectoryContents p
     isExecutable :: FilePath -> IO Bool
     isExecutable p = executable <$> getPermissions p
 
