@@ -1,8 +1,11 @@
 module Main where
 
+import           Data.List
 import           Data.Monoid
-import           Distribution.PackageDescription    (Executable (..),
-                                                     PackageDescription (..))
+import           Distribution.PackageDescription    (BuildInfo (..),
+                                                     Executable (..),
+                                                     PackageDescription (..),
+                                                     emptyBuildInfo)
 import           Distribution.Simple
 import           Distribution.Simple.Install
 import           Distribution.Simple.LocalBuildInfo
@@ -29,9 +32,18 @@ copyThings pkg lbi _ flags = do
     let (main_pkg, main_lbi) = tweakMainInstall pkg lbi
     install main_pkg main_lbi flags
 
-    -- Then install the "secondary" components with the special settings.
+    -- Then install the "secondary" executables and plugin scripts with the
+    -- special settings.
     let (sub_pkg, sub_lbi) = tweakSubcommandInstall pkg lbi
     install sub_pkg sub_lbi flags
+
+-- | Directory our plugin scripts are kept in.
+pluginPrefix :: FilePath
+pluginPrefix = "plugins/"
+
+-- | A data file is in the plugins directory.
+isPlugin :: FilePath -> Bool
+isPlugin = (pluginPrefix `isPrefixOf`)
 
 -- | Tweak parameters for install of main components (i.e. library and first
 -- executable) only.
@@ -40,7 +52,9 @@ tweakMainInstall
     -> LocalBuildInfo
     -> (PackageDescription, LocalBuildInfo)
 tweakMainInstall pkg lbi =
-    let pkg' = pkg { executables = take 1 $ executables pkg }
+    let pkg' = pkg { executables = take 1 $ executables pkg
+                   , dataFiles = filter (not . isPlugin) $ dataFiles pkg
+                   }
     in (pkg', lbi)
 
 -- | Tweak parameters for install of secondary components (i.e. executables
@@ -50,10 +64,24 @@ tweakSubcommandInstall
     -> LocalBuildInfo
     -> (PackageDescription, LocalBuildInfo)
 tweakSubcommandInstall pkg lbi =
-    let pkg' = pkg { executables = tail $ executables pkg }
+    let dest = suffixIt . libexecdir $ installDirTemplates lbi
+        pkg' = pkg { executables = tail $ executables pkg
+                   , dataFiles = map stripPrefix . filter isPlugin $ dataFiles pkg
+                   , dataDir = dataDir pkg </> pluginPrefix
+                   , library = Nothing
+                   , testSuites = []
+                   , benchmarks = []
+                   , extraSrcFiles = []
+                   , extraTmpFiles = []
+                   , extraDocFiles = []
+                   }
         lbi' = lbi { installDirTemplates = (installDirTemplates lbi)
-                        { bindir = suffixIt . libexecdir $ installDirTemplates lbi }
+                        { bindir = dest
+                        , datadir = dest
+                        , datasubdir = toPathTemplate ""
+                        }
                    }
     in (pkg', lbi')
   where
     suffixIt = toPathTemplate . (</> "git-vogue") . fromPathTemplate
+    stripPrefix = dropWhile (== '/') . dropWhile (/= '/')
