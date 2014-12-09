@@ -20,8 +20,10 @@ execute
     -> IO ()
 execute cmd = case cmd of
     CmdName  -> putStrLn "cabal"
-    CmdCheck -> callProcess "cabal" ["check"]
+    CmdCheck -> run "cabal" ["check"]
     CmdFix   -> exitFailure
+  where
+    run prog args = spawnProcess prog args >>= waitForProcess >>= exitWith
 
 optionsParser :: Parser Command
 optionsParser = subparser
