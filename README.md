@@ -5,6 +5,8 @@ git-vogue
 
 *git-vogue* assists developers to keep their Haskell code ["in vogue"][1].
 
+![git-vogue](https://raw.github.com/anchor/git-vogue/master/assets/git-vogue.png)
+
 This package defines a list of commands to check code quality, comments, and formatting continually. *git-vogue* will set up your repository to run all command pairs on commit, giving instant feedback on the quality of code, and helping fix issues more quickly.
 
 Currently, *git-vogue* will support [hlint][2], [hspec][3] and [Stylish Haskell][4].
