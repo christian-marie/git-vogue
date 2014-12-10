@@ -1,5 +1,6 @@
 module Main where
 
+import           Control.Monad
 import           Data.List
 import           Data.Monoid
 import           Distribution.PackageDescription    (BuildInfo (..),
@@ -43,23 +44,23 @@ copyThings pkg lbi _ flags = do
     -- This was stolen from "Distribution.Simple.Install" and hacked. Why is
     -- cabal so terrible compared to make and friends?
     let scripts = map stripPluginPrefix . filter isPlugin $ dataFiles pkg
-        paths = absoluteInstallDirs sub_pkg sub_lbi $ fromFlag (copyDest flags)
         verbosity = fromFlag (copyVerbosity flags)
-    flip mapM_ scripts $ \ file -> do
-        let srcDataDir = dataDir sub_pkg
-        let destDataDir = datadir paths
-        files <- matchDirFileGlob srcDataDir file
+        src_data_dir = dataDir sub_pkg
+        dest_data_dir = datadir $ absoluteInstallDirs sub_pkg sub_lbi $
+                        fromFlag (copyDest flags)
+    forM_ scripts $ \ file -> do
         let dir = takeDirectory file
-        createDirectoryIfMissingVerbose verbosity True (destDataDir </> dir)
-        sequence_ [ installExecutableFile verbosity (srcDataDir  </> file')
-                                                    (destDataDir </> file')
-                  | file' <- files ]
-
+        files <- matchDirFileGlob src_data_dir file
+        createDirectoryIfMissingVerbose verbosity True (dest_data_dir </> dir)
+        forM_ files $ \file' ->
+            installExecutableFile verbosity (src_data_dir </> file')
+                                            (dest_data_dir </> file')
 
 -- | Directory our plugin scripts are kept in.
 pluginPrefix :: FilePath
 pluginPrefix = "plugins/"
 
+-- | Strip the 'pluginPrefix' off the front of a 'FilePath'.
 stripPluginPrefix :: FilePath -> FilePath
 stripPluginPrefix = dropWhile (== '/') . dropWhile (/= '/')
 
