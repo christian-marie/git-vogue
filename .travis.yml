@@ -1,6 +1,6 @@
 language: haskell
 ghc: 7.8
 script:
-  - cabal configure --prefix="${TRAVIS_BUILD_DIR}/tmp/acceptance_install" --enable-tests && cabal build && cabal test
+  - cabal configure --enable-tests && cabal build && cabal test
   - ./acceptance-tests
 
