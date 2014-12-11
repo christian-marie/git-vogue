@@ -1,5 +1,9 @@
 language: haskell
 ghc: 7.8
+notifications:
+  email:
+    on_success: change
+    on_failure: change
 before_install:
   - cabal update
   - cabal install cabal-install Cabal stylish-haskell hlint
