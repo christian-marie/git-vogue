@@ -17,6 +17,8 @@ function setup() {
 	local dst=$(make_install_dir)
 
 	cabal install --prefix="${dst}"
+	echo "dst has stuff:"
+	find "${dst}"
 	PATH="${dst}/bin:${PATH}"
 }
 

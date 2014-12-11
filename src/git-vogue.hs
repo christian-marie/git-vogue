@@ -57,10 +57,15 @@ discoverPlugins = do
   where
     ls :: FilePath -> IO [FilePath]
     ls p = do
+        putStrLn $ "Trying to get plugins from: " ++ p
         exists <- doesDirectoryExist p
-        if exists
+        putStrLn $ "Does exist? " ++ show exists
+        x <- if exists
             then map (p </>) <$> getDirectoryContents p
             else return []
+        print $ "Got dirs: " ++ show x
+        return x
+
     isExecutable :: FilePath -> IO Bool
     isExecutable p = executable <$> getPermissions p
     concatM :: Monad m => [[a]] -> m [a]
