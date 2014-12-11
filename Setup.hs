@@ -32,11 +32,15 @@ copyThings
 copyThings pkg lbi _ flags = do
     -- First install only the "main" components with the default settings.
     let (main_pkg, main_lbi) = tweakMainInstall pkg lbi
+
+    putStrLn "Installing primary components"
     install main_pkg main_lbi flags
 
     -- Then install the "secondary" executables and plugin scripts with the
     -- special settings.
     let (sub_pkg, sub_lbi) = tweakSubcommandInstall pkg lbi
+
+    putStrLn "Installing secondary components"
     install sub_pkg sub_lbi flags
 
     -- Install shell scripts from plugins/.
@@ -48,6 +52,9 @@ copyThings pkg lbi _ flags = do
         src_data_dir = dataDir sub_pkg
         dest_data_dir = datadir $ absoluteInstallDirs sub_pkg sub_lbi $
                         fromFlag (copyDest flags)
+
+    putStrLn $ "Installing " <> show (length scripts) <> " plugins to: "
+        <> dest_data_dir
     forM_ scripts $ \ file -> do
         let dir = takeDirectory file
         files <- matchDirFileGlob src_data_dir file
