@@ -1,6 +1,10 @@
 language: haskell
 ghc: 7.8
+env:
+  - 'CABALVER=1.20'
 script:
-  - cabal configure --enable-tests && cabal build && cabal test
+  - cabal-$CABALVER configure --enable-tests
+  - cabal-$CABALVER build
+  - cabal-$CABALVER test
   - ./acceptance-tests
 

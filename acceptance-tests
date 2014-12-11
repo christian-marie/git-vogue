@@ -2,6 +2,11 @@
 
 set -x
 
+CABAL=cabal
+if [ -n "$CABALVER" ]; then
+	CABAL="${CABAL}-$CABALVER"
+fi
+
 function make_install_dir() {
 	local dst="tmp/acceptance_install"
 	rm -rf "${dst}"
@@ -16,7 +21,7 @@ function setup() {
 	teardown
 	local dst=$(make_install_dir)
 
-	cabal install --prefix="${dst}"
+	$CABAL install --prefix="${dst}"
 	echo "dst has stuff:"
 	find "${dst}"
 	echo; echo; echo; echo
