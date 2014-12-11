@@ -38,7 +38,7 @@ pushd fixtures/bad_repo/
 git init .
 git vogue init
 
-OUT=$(git commit 2>&1)
+OUT=$(git -c user.email="a" -c user.name="b" commit 2>&1)
 if [[ $? == 0 ]]; then
     fail "Succeeded when failure expected"
 fi
@@ -51,7 +51,7 @@ if [[ ! ${OUT} =~ .*"hlint succeeded with".* ]]; then
 	fail "hlintdid not succeed"
 fi
 
-if [[ ! ${OUT} =~ .*"Stylish haskell succeeded with".* ]]; then
+if [[ ! ${OUT} =~ .*"Stylish Haskell succeeded with".* ]]; then
 	fail "stylish haskell succeeded with"
 fi
 
