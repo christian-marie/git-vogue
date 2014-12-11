@@ -1,4 +1,4 @@
 module Main where
-import                                                                       Orange
+import           Orange
 
 main = undefined

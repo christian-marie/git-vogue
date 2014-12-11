@@ -4,7 +4,7 @@
 -- | Description: Test git repository setup.
 module Main where
 
-import           Control.Monad.IO.Class      ()
+import           Control.Monad.IO.Class ()
 import           Data.Monoid
 import           System.FilePath
 import           Test.Hspec
