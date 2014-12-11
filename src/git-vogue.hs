@@ -57,6 +57,7 @@ discoverPlugins = do
   where
     ls :: FilePath -> IO [FilePath]
     ls p = do
+        putStrLn $ "Trying to get plugins from: " ++ p
         exists <- doesDirectoryExist p
         if exists
             then map (p </>) <$> getDirectoryContents p
