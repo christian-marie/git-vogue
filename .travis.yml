@@ -2,7 +2,7 @@ language: haskell
 ghc: 7.8
 before_install:
   - cabal update
-  - cabal install cabal-install Cabal
+  - cabal install cabal-install Cabal stylish-haskell hlint
 script:
   - cabal configure --enable-tests
   - cabal build
