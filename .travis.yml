@@ -7,11 +7,11 @@ notifications:
 before_install:
   - cabal update
   - cabal install cabal-install
-  - cabal install stylish-haskell
-  - cabal install hlint
 script:
   - cabal configure --enable-tests
   - cabal build
   - cabal test
+  - cabal install stylish-haskell
+  - cabal install hlint
   - ./acceptance-tests
 
