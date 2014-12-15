@@ -24,11 +24,11 @@ import qualified Data.Text.IO           as T
 import           System.Exit
 import           System.Process
 
-ioPluginExecutorImpl :: PluginExecutorImpl IO
+ioPluginExecutorImpl :: MonadIO m => PluginExecutorImpl m
 ioPluginExecutorImpl =
     PluginExecutorImpl (f "fix") (f "check")
   where
-    f arg (Plugin path) = do
+    f arg (Plugin path) = liftIO $ do
         name <- getName path
         (status, stdout, stderr) <- readProcessWithExitCode path [arg] mempty
         let glommed = fromString $ stdout <> stderr
@@ -48,29 +48,14 @@ colorize (Success     (PluginName x) y) = "\x1b[32m" <> x <> " succeeded with " 
 colorize (Failure     (PluginName x) y) = "\x1b[33m" <> x <> " failed with "    <> y <> "\x1b[0m"
 colorize (Catastrophe (PluginName x) y) = "\x1b[31m" <> x <> " exploded with "  <> y <> "\x1b[0m"
 
-checkPlugins'
-    :: MonadIO m
-    => [Plugin]
-    -> m ()
-checkPlugins' ps = liftIO $ do
-    st <- checkPlugins ioPluginExecutorImpl ps
-    case st of
-        Success{} ->
-            exitSuccess
-        Failure _ output -> do
-            T.putStrLn output
-            exitWith $ ExitFailure 1
-        Catastrophe _ output -> do
-            T.putStrLn output
-            exitWith $ ExitFailure 2
 
-fixPlugins'
+-- | Output the result of a Plugin and exit with an appropriate return code
+outputStatusAndExit
     :: MonadIO m
-    => [Plugin]
+    => Status a
     -> m ()
-fixPlugins' ps = liftIO $ do
-    st <- fixPlugins ioPluginExecutorImpl ps
-    case st of
+outputStatusAndExit status = liftIO $
+    case status of
         Success _ output -> do
             T.putStrLn output
             exitSuccess
