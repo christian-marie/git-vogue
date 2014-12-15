@@ -69,8 +69,12 @@ runCommand
 runCommand CmdInit{..} = runWithRepoPath (gitAddHook templatePath)
 runCommand CmdVerify   = error "Not implemented: verify"
 runCommand CmdList     = gitListHook
-runCommand CmdRunCheck = ask >>= checkPlugins'
-runCommand CmdRunFix   = ask >>= fixPlugins'
+runCommand CmdRunCheck =   ask
+                       >>= checkPlugins ioPluginExecutorImpl
+                       >>= outputStatusAndExit
+runCommand CmdRunFix   = ask
+                       >>= fixPlugins ioPluginExecutorImpl
+                       >>= outputStatusAndExit
 
 -- | Find the git repository path and pass it to an action.
 --
@@ -83,6 +87,10 @@ runWithRepoPath action =
     -- Get the path to the git repo top-level directory.
     liftIO (readProcess "git" ["rev-parse", "--show-toplevel"] "")
     >>= action . strip
+
+--- | Command string to insert into pre-commit hooks.
+preCommitCommand :: String
+preCommitCommand = "git-vogue check"
 
 -- | Add the git pre-commit hook.
 gitAddHook
@@ -100,12 +108,11 @@ gitAddHook template path = liftIO $ do
     createHook = copyHookTemplateTo template
     updateHook hook = do
         content <- readFile hook
-        let cmd  = "git-vogue check"
-        unless (cmd `isInfixOf` content) $ do
+        unless (preCommitCommand `isInfixOf` content) $ do
             putStrLn $ "A pre-commit hook already exists at \n\t"
                 <> hook
                 <> "\nbut it does not contain the command\n\t"
-                <> cmd
+                <> preCommitCommand
                 <> "\nPlease edit the hook and add this command yourself!"
             exitFailure
         putStrLn "Your commit hook is already in place."
