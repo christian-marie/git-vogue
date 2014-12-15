@@ -11,5 +11,3 @@ script:
   - cabal configure --enable-tests
   - cabal build
   - cabal test
-  - ./acceptance-tests
-

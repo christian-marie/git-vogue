@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 
-module Git.Vogue.Modules where
+module Git.Vogue.Plugins where
 
 import           Git.Vogue.Types
 

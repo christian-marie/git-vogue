@@ -21,7 +21,7 @@ import           System.FilePath
 import           System.Posix.Files
 import           System.Process
 
-import           Git.Vogue.Modules
+import           Git.Vogue.Plugins
 import           Git.Vogue.Types
 import           Paths_git_vogue
 

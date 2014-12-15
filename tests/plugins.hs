@@ -9,7 +9,7 @@ import           Data.Monoid
 import           System.FilePath
 import           Test.Hspec
 
-import           Git.Vogue.Modules
+import           Git.Vogue.Plugins
 import           Git.Vogue.Types
 
 failingModuleExecutorImpl :: ModuleExecutorImpl IO
