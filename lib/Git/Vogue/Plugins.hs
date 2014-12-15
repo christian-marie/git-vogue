@@ -1,3 +1,12 @@
+--
+-- Copyright © 2013-2014 Anchor Systems, Pty Ltd and Others
+--
+-- The code in this file, and the program it is a part of, is
+-- made available to you by its authors as open source software:
+-- you can redistribute it and/or modify it under the terms of
+-- the 3-clause BSD licence.
+--
+
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 
@@ -15,9 +24,9 @@ import qualified Data.Text.IO           as T
 import           System.Exit
 import           System.Process
 
-ioModuleExecutorImpl :: ModuleExecutorImpl IO
-ioModuleExecutorImpl =
-    ModuleExecutorImpl (f "fix") (f "check")
+ioPluginExecutorImpl :: PluginExecutorImpl IO
+ioPluginExecutorImpl =
+    PluginExecutorImpl (f "fix") (f "check")
   where
     f arg (Plugin path) = do
         name <- getName path
@@ -30,21 +39,21 @@ ioModuleExecutorImpl =
 
     getName path = do
         (status, name, _) <- readProcessWithExitCode path ["name"] mempty
-        return . ModuleName . fromString . strip $ case status of
+        return . PluginName . fromString . strip $ case status of
             ExitSuccess -> if null name then path else name
             ExitFailure _ -> path
 
 colorize :: Status a -> Text
-colorize (Success     (ModuleName x) y) = "\x1b[32m" <> x <> " succeeded with " <> y <> "\x1b[0m"
-colorize (Failure     (ModuleName x) y) = "\x1b[33m" <> x <> " failed with "    <> y <> "\x1b[0m"
-colorize (Catastrophe (ModuleName x) y) = "\x1b[31m" <> x <> " exploded with "  <> y <> "\x1b[0m"
+colorize (Success     (PluginName x) y) = "\x1b[32m" <> x <> " succeeded with " <> y <> "\x1b[0m"
+colorize (Failure     (PluginName x) y) = "\x1b[33m" <> x <> " failed with "    <> y <> "\x1b[0m"
+colorize (Catastrophe (PluginName x) y) = "\x1b[31m" <> x <> " exploded with "  <> y <> "\x1b[0m"
 
-checkModules'
+checkPlugins'
     :: MonadIO m
     => [Plugin]
     -> m ()
-checkModules' ps = liftIO $ do
-    st <- checkModules ioModuleExecutorImpl ps
+checkPlugins' ps = liftIO $ do
+    st <- checkPlugins ioPluginExecutorImpl ps
     case st of
         Success{} ->
             exitSuccess
@@ -55,12 +64,12 @@ checkModules' ps = liftIO $ do
             T.putStrLn output
             exitWith $ ExitFailure 2
 
-fixModules'
+fixPlugins'
     :: MonadIO m
     => [Plugin]
     -> m ()
-fixModules' ps = liftIO $ do
-    st <- fixModules ioModuleExecutorImpl ps
+fixPlugins' ps = liftIO $ do
+    st <- fixPlugins ioPluginExecutorImpl ps
     case st of
         Success _ output -> do
             T.putStrLn output
@@ -72,21 +81,21 @@ fixModules' ps = liftIO $ do
             T.putStrLn output
             exitWith $ ExitFailure 2
 
-checkModules
+checkPlugins
     :: Monad m
-    => ModuleExecutorImpl m
+    => PluginExecutorImpl m
     -> [Plugin]
     -> m (Status Check)
-checkModules ModuleExecutorImpl{..} ps = do
+checkPlugins PluginExecutorImpl{..} ps = do
     rs <- mapM executeCheck ps
     return $ insertMax rs (T.unlines $ map colorize rs)
 
-fixModules
+fixPlugins
     :: Monad m
-    => ModuleExecutorImpl m
+    => PluginExecutorImpl m
     -> [Plugin]
     -> m (Status Fix)
-fixModules ModuleExecutorImpl{..} ps = do
+fixPlugins PluginExecutorImpl{..} ps = do
     rs <- mapM executeFix ps
     return $ insertMax rs (T.unlines $ map colorize rs)
 
