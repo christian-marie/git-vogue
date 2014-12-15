@@ -1,0 +1,64 @@
+#!/bin/bash
+
+set -x
+
+CABAL=cabal
+if [ -n "$CABALVER" ]; then
+	CABAL="${CABAL}-$CABALVER"
+fi
+
+function make_install_dir() {
+	local dst="tmp/acceptance_install"
+	rm -rf "${dst}"
+	mkdir -p "${dst}"
+	pushd "${dst}" > /dev/null
+	pwd
+	popd > /dev/null
+
+}
+
+function setup() {
+	teardown
+	local dst=$(make_install_dir)
+
+	$CABAL install --prefix="${dst}"
+	cabal install --prefix="${dst}"
+	PATH="${dst}/bin:${PATH}"
+}
+
+function teardown() {
+	rm -rf fixtures/*/.git tmp
+}
+
+function fail() { 
+	echo "$@"
+	exit 1
+}
+
+setup
+
+# As a user, I can run git-vogue check and get pretty output.
+
+pushd fixtures/bad_repo/
+
+git init .
+git vogue init
+
+OUT=$(git -c user.email="a" -c user.name="b" commit 2>&1)
+if [[ $? == 0 ]]; then
+    fail "Succeeded when failure expected"
+fi
+
+if [[ ! ${OUT} =~ .*"cabal failed with".* ]]; then
+	fail "cabal did not fail"
+fi
+
+if [[ ! ${OUT} =~ .*"hlint succeeded with".* ]]; then
+	fail "hlintdid not succeed"
+fi
+
+if [[ ! ${OUT} =~ .*"Stylish Haskell succeeded with".* ]]; then
+	fail "stylish haskell succeeded with"
+fi
+
+teardown
