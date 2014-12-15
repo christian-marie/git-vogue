@@ -22,11 +22,7 @@ function setup() {
 	local dst=$(make_install_dir)
 
 	$CABAL install --prefix="${dst}"
-	echo "dst has stuff:"
-	find "${dst}"
-	echo; echo; echo; echo
-	find . -name git-vogue-0.1.0.0.log -exec cat {} \;
-	echo; echo; echo; echo
+	cabal install --prefix="${dst}"
 	PATH="${dst}/bin:${PATH}"
 }
 
