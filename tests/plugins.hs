@@ -1,3 +1,12 @@
+--
+-- Copyright © 2013-2014 Anchor Systems, Pty Ltd and Others
+--
+-- The code in this file, and the program it is a part of, is
+-- made available to you by its authors as open source software:
+-- you can redistribute it and/or modify it under the terms of
+-- the 3-clause BSD licence.
+--
+
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -12,14 +21,14 @@ import           Test.Hspec
 import           Git.Vogue.Plugins
 import           Git.Vogue.Types
 
-failingModuleExecutorImpl :: ModuleExecutorImpl IO
-failingModuleExecutorImpl =
-        ModuleExecutorImpl (const . return $ Failure mempty mempty)
+failingPluginExecutorImpl :: PluginExecutorImpl IO
+failingPluginExecutorImpl =
+        PluginExecutorImpl (const . return $ Failure mempty mempty)
                            (const . return $ Failure mempty mempty)
 
-succeedingModuleExecutorImpl :: ModuleExecutorImpl IO
-succeedingModuleExecutorImpl =
-        ModuleExecutorImpl (const . return $ Success mempty mempty)
+succeedingPluginExecutorImpl :: PluginExecutorImpl IO
+succeedingPluginExecutorImpl =
+        PluginExecutorImpl (const . return $ Success mempty mempty)
                            (const . return $ Success mempty mempty)
 
 main :: IO ()
@@ -30,15 +39,15 @@ main = hspec $ do
                 `shouldBe` Failure mempty mempty
 
         it "fails if one module fails" $ do
-            checkModules failingModuleExecutorImpl ["a", "b"]
+            checkPlugins failingPluginExecutorImpl ["a", "b"]
               >>= (`shouldBe` Failure mempty "\x1b[33m failed with \x1b[0m\n\x1b[33m failed with \x1b[0m\n")
-            fixModules failingModuleExecutorImpl ["monkey"]
+            fixPlugins failingPluginExecutorImpl ["monkey"]
               >>= (`shouldBe` Failure mempty "\x1b[33m failed with \x1b[0m\n")
 
         it "succeeds if all modules succeed" $ do
-            checkModules succeedingModuleExecutorImpl ["a", "b"]
+            checkPlugins succeedingPluginExecutorImpl ["a", "b"]
               >>= (`shouldBe` Success mempty "\x1b[32m succeeded with \x1b[0m\n\x1b[32m succeeded with \x1b[0m\n")
-            fixModules succeedingModuleExecutorImpl ["monkey"]
+            fixPlugins succeedingPluginExecutorImpl ["monkey"]
               >>= (`shouldBe` Success mempty "\x1b[32m succeeded with \x1b[0m\n")
 
     describe "IO module executor" $ do
@@ -72,10 +81,10 @@ runFixExecutor :: FilePath -> Status Fix -> Expectation
 runFixExecutor = runTestExecutor executeFix
 
 runTestExecutor
-    :: (ModuleExecutorImpl IO -> Plugin -> IO (Status a))
+    :: (PluginExecutorImpl IO -> Plugin -> IO (Status a))
     -> FilePath
     -> Status a
     -> Expectation
 runTestExecutor act file expected =
-    act ioModuleExecutorImpl (Plugin ("fixtures" </> file))
+    act ioPluginExecutorImpl (Plugin ("fixtures" </> file))
       >>= (`shouldBe` expected)
