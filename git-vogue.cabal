@@ -53,6 +53,7 @@ executable git-vogue-cabal
   hs-source-dirs:      src
   main-is:             git-vogue-cabal.hs
   build-depends:       base >=4.7 && <4.8
+                     , Cabal
                      , optparse-applicative >= 0.11
                      , process
 
