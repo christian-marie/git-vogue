@@ -33,6 +33,25 @@ execute cmd = case cmd of
   where
     run prog args = spawnProcess prog args >>= waitForProcess >>= exitWith
 
+optionsParser :: Parser Command
+optionsParser = subparser
+    (  command "name" (info pName mempty)
+    <> command "check" (info pCheck mempty)
+    <> command "fix" (info pFix mempty)
+    )
+  where
+    pName = pure CmdName
+    pCheck = pure CmdCheck
+    pFix = pure CmdFix
+
+main :: IO ()
+main = execParser opts >>= execute
+  where
+    opts = info (helper <*> optionsParser)
+        ( fullDesc
+        <> progDesc "Check your Haskell project for cabal-related problems."
+        <> header "git-vogue-cabal - check for cabal problems" )
+
 -- | Runs the same thing as cabal check.
 -- See also "Distribution.Client.Check" in cabal-install.
 check :: Verbosity -> IO Bool
@@ -69,22 +88,3 @@ check verbosity = do
   where
     printCheckMessages = mapM_ (putStrLn . format . explanation)
     format = toUTF8 . wrapText . ("* "++)
-
-optionsParser :: Parser Command
-optionsParser = subparser
-    (  command "name" (info pName mempty)
-    <> command "check" (info pCheck mempty)
-    <> command "fix" (info pFix mempty)
-    )
-  where
-    pName = pure CmdName
-    pCheck = pure CmdCheck
-    pFix = pure CmdFix
-
-main :: IO ()
-main = execParser opts >>= execute
-  where
-    opts = info (helper <*> optionsParser)
-        ( fullDesc
-        <> progDesc "Check your Haskell project for cabal-related problems."
-        <> header "git-vogue-cabal - check for cabal problems" )
