@@ -132,6 +132,35 @@ fi
 
 popd > /dev/null
 
+# This should pass all checks.
+
+echo "Running good-example"
+
+pushd $REPO_DST/good-example/
+pwd
+
+git init .
+git vogue init
+
+OUT=$(git -c user.email="a" -c user.name="b" commit 2>&1)
+if [[ $? != 0 ]]; then
+    fail "Failed when success expected"
+fi
+
+if [[ ! ${OUT} =~ .*"cabal succeeded with".* ]]; then
+	fail "cabal did not succeed"
+fi
+
+if [[ ! ${OUT} =~ .*"hlint succeeded with".* ]]; then
+	fail "hlint did not succeed"
+fi
+
+if [[ ! ${OUT} =~ .*"Stylish Haskell succeeded with".* ]]; then
+	fail "stylish haskell did not succeed"
+fi
+
+popd > /dev/null
+
 # All tests have finished
 
 teardown
