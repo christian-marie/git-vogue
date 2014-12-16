@@ -9,7 +9,6 @@ import           Options.Applicative
 import           System.Directory
 import           System.Exit
 import           System.FilePath
-import           System.Process
 
 data Command
     -- | Check the project for problems.
@@ -26,8 +25,6 @@ execute cmd = case cmd of
     CmdName  -> putStrLn "hlint"
     CmdCheck -> hlintDirs ["./"]
     CmdFix   -> exitFailure
-  where
-    run prog args = spawnProcess prog args >>= waitForProcess >>= exitWith
 
 optionsParser :: Parser Command
 optionsParser = subparser
@@ -52,15 +49,18 @@ main = execParser opts >>= execute
 hlintDirs :: [FilePath] -> IO ()
 hlintDirs dirs = do
     s <- autoSettings
-    files <- sequence $ map getSourceFilesForDir dirs
-    _ <- mapM (hlintFile s) $ concat files
-    return ()
+    files <- mapM getSourceFilesForDir dirs
+    ig <- mapM (hlintFile s) $ concat files
+    let ideas = concat ig
+    unless (null ideas) $
+        do  print ideas
+            exitFailure
 
 -- | Run hlint on a single file.
-hlintFile :: (ParseFlags, [Classify], Hint) -> FilePath -> IO ()
+hlintFile :: (ParseFlags, [Classify], Hint) -> FilePath -> IO [Idea]
 hlintFile (flags, classify, hint) f = do
     Right m <- parseModuleEx flags f Nothing
-    print $ applyHints classify hint [m]
+    return $ applyHints classify hint [m]
 
 -- | Get all source files recursively within a single directory.
 getSourceFilesForDir :: FilePath -> IO [FilePath]
@@ -73,8 +73,8 @@ getSourceFilesForDir dir = do
         if isDirectory
             then return ([path],[])
             else return ([],[path])
-    childFiles <- sequence $ map getSourceFilesForDir (concat $ map fst paths)
-    let localFiles = concat $ map snd paths
-    return $ (concat childFiles) ++ (filter isHaskell localFiles)
-  where
-    isHaskell = (==) ".hs" . takeExtension
+    childFiles <- mapM getSourceFilesForDir (concatMap fst paths)
+    let localFiles = concatMap snd paths
+    return $
+        concat childFiles ++
+        filter ((==) ".hs" . takeExtension) localFiles

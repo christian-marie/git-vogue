@@ -2,16 +2,18 @@
 module Main where
 
 import           Control.Applicative
-import           Control.Monad (when, unless)
+import           Control.Monad                                 (unless, when)
 import           Data.Monoid
 import           Distribution.PackageDescription.Check
 import           Distribution.PackageDescription.Configuration (flattenPackageDescription)
-import           Distribution.PackageDescription.Parse (readPackageDescription)
-import           Distribution.Simple.Utils (defaultPackageDesc, toUTF8, wrapText)
-import           Distribution.Verbosity (Verbosity, silent)
+import           Distribution.PackageDescription.Parse         (readPackageDescription)
+import           Distribution.Simple.Utils                     (defaultPackageDesc,
+                                                                toUTF8,
+                                                                wrapText)
+import           Distribution.Verbosity                        (Verbosity,
+                                                                silent)
 import           Options.Applicative
 import           System.Exit
-import           System.Process
 
 data Command
     -- | Check the project for problems.
@@ -30,8 +32,6 @@ execute cmd = case cmd of
         allOk <- check silent
         unless allOk exitFailure
     CmdFix   -> exitFailure
-  where
-    run prog args = spawnProcess prog args >>= waitForProcess >>= exitWith
 
 optionsParser :: Parser Command
 optionsParser = subparser
