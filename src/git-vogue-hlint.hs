@@ -70,9 +70,9 @@ getSourceFilesForDir dir = do
     paths <- forM properNames $ \name -> do
         let path = dir </> name
         isDirectory <- doesDirectoryExist path
-        if isDirectory
-            then return ([path],[])
-            else return ([],[path])
+        return $ if isDirectory
+            then ([path],[])
+            else ([],[path])
     childFiles <- mapM getSourceFilesForDir (concatMap fst paths)
     let localFiles = concatMap snd paths
     return $
