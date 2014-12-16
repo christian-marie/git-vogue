@@ -1,0 +1,70 @@
+#!/bin/bash
+
+set -x
+
+CABAL=cabal
+if [ -n "$CABALVER" ]; then
+	CABAL="${CABAL}-$CABALVER"
+fi
+
+TOP_DST="tmp"
+ACCEPT_DST="$TOP_DST/acceptance_install"
+REPO_DST="$TOP_DST/acceptance_repo"
+
+function make_install_dir() {
+	local dst="$ACCEPT_DST"
+	rm -rf "${dst}"
+	mkdir -p "${dst}"
+	pushd "${dst}" > /dev/null
+	pwd
+	popd > /dev/null
+}
+
+function setup() {
+	teardown
+
+	$CABAL install --prefix="$ACCEPT_DST"
+	cabal install --prefix="$ACCEPT_DST"
+	PATH="$ACCEPT_DST/bin:${PATH}"
+
+	git clone https://github.com/anchor/git-vogue-acceptance.git $REPO_DST
+}
+
+function teardown() {
+	rm -rf $TOP_DST
+}
+
+function fail() { 
+	echo "$@"
+	exit 1
+}
+
+setup
+
+# The malformed branch should pass hlint, due to lack of Haskell files, 
+# but will not pass check or stylish.
+
+pushd $REPO_DST/cabal-malformed/
+pwd
+
+git init .
+git vogue init
+
+OUT=$(git -c user.email="a" -c user.name="b" commit 2>&1)
+if [[ $? == 0 ]]; then
+    fail "Succeeded when failure expected"
+fi
+
+if [[ ! ${OUT} =~ .*"cabal failed with".* ]]; then
+	fail "cabal did not fail"
+fi
+
+if [[ ! ${OUT} =~ .*"hlint succeeded with".* ]]; then
+	fail "hlint did not succeed"
+fi
+
+if [[ ! ${OUT} =~ .*"Stylish Haskell failed with".* ]]; then
+	fail "stylish haskell failed with"
+fi
+
+teardown
