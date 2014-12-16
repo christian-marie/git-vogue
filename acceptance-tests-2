@@ -44,6 +44,8 @@ setup
 # The malformed branch should pass hlint, due to lack of Haskell files, 
 # but will not pass check or stylish.
 
+echo "Running cabal-malformed"
+
 pushd $REPO_DST/cabal-malformed/
 pwd
 
@@ -66,5 +68,39 @@ fi
 if [[ ! ${OUT} =~ .*"Stylish Haskell failed with".* ]]; then
 	fail "stylish haskell failed with"
 fi
+
+popd > /dev/null
+
+# The malformed branch should pass hlint, due to lack of Haskell files,
+# but will not pass check or stylish.
+
+echo "Running stylish-unstylish"
+
+pushd $REPO_DST/stylish-unstylish/
+pwd
+
+git init .
+git vogue init
+
+OUT=$(git -c user.email="a" -c user.name="b" commit 2>&1)
+if [[ $? == 0 ]]; then
+    fail "Succeeded when failure expected"
+fi
+
+if [[ ! ${OUT} =~ .*"cabal succeeded with".* ]]; then
+	fail "cabal did not succeed"
+fi
+
+if [[ ! ${OUT} =~ .*"hlint succeeded with".* ]]; then
+	fail "hlint did not succeed"
+fi
+
+if [[ ! ${OUT} =~ .*"Stylish Haskell failed with".* ]]; then
+	fail "stylish haskell did not fail"
+fi
+
+popd > /dev/null
+
+# All tests have finished
 
 teardown
