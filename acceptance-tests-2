@@ -41,7 +41,7 @@ function fail() {
 
 setup
 
-# The malformed branch should pass hlint, due to lack of Haskell files, 
+# This should pass hlint, due to lack of Haskell files, 
 # but will not pass check or stylish.
 
 echo "Running cabal-malformed"
@@ -71,7 +71,38 @@ fi
 
 popd > /dev/null
 
-# The malformed branch should pass hlint, due to lack of Haskell files,
+# This will pass check and stylish, but will fail on hlint
+# due to lack of optimisation.
+
+echo "Running hlint-noopt"
+
+pushd $REPO_DST/hlint-noopt/
+pwd
+
+git init .
+git vogue init
+
+OUT=$(git -c user.email="a" -c user.name="b" commit 2>&1)
+if [[ $? == 0 ]]; then
+    fail "Succeeded when failure expected"
+fi
+
+if [[ ! ${OUT} =~ .*"cabal succeeded with".* ]]; then
+	fail "cabal did not succeed"
+fi
+
+if [[ ! ${OUT} =~ .*"hlint failed with".* ]]; then
+	fail "hlint did not fail"
+fi
+
+# @TODO: Fix test so stylish succeeds.
+if [[ ! ${OUT} =~ .*"Stylish Haskell failed with".* ]]; then
+	fail "stylish haskell did not fail"
+fi
+
+popd > /dev/null
+
+# This should pass hlint, due to lack of Haskell files,
 # but will not pass check or stylish.
 
 echo "Running stylish-unstylish"
