@@ -2,10 +2,13 @@
 module Main where
 
 import           Control.Applicative
+import           Control.Monad
 import           Data.Monoid
+import           Language.Haskell.HLint3
 import           Options.Applicative
+import           System.Directory
 import           System.Exit
-import           System.Process
+import           System.FilePath
 
 data Command
     -- | Check the project for problems.
@@ -20,10 +23,8 @@ execute
     -> IO ()
 execute cmd = case cmd of
     CmdName  -> putStrLn "hlint"
-    CmdCheck -> run "hlint" ["./"]
+    CmdCheck -> hlintDirs ["./"]
     CmdFix   -> exitFailure
-  where
-    run prog args = spawnProcess prog args >>= waitForProcess >>= exitWith
 
 optionsParser :: Parser Command
 optionsParser = subparser
@@ -43,3 +44,37 @@ main = execParser opts >>= execute
         ( fullDesc
         <> progDesc "Check your Haskell project for cabal-related problems."
         <> header "git-vogue-cabal - check for cabal problems" )
+
+-- | Run hlint on a list of directories.
+hlintDirs :: [FilePath] -> IO ()
+hlintDirs dirs = do
+    s <- autoSettings
+    files <- mapM getSourceFilesForDir dirs
+    ig <- mapM (hlintFile s) $ concat files
+    let ideas = concat ig
+    unless (null ideas) $
+        do  print ideas
+            exitFailure
+
+-- | Run hlint on a single file.
+hlintFile :: (ParseFlags, [Classify], Hint) -> FilePath -> IO [Idea]
+hlintFile (flags, classify, hint) f = do
+    Right m <- parseModuleEx flags f Nothing
+    return $ applyHints classify hint [m]
+
+-- | Get all source files recursively within a single directory.
+getSourceFilesForDir :: FilePath -> IO [FilePath]
+getSourceFilesForDir dir = do
+    contents <- getDirectoryContents dir
+    let properNames = filter (`notElem` [".", ".."]) contents
+    paths <- forM properNames $ \name -> do
+        let path = dir </> name
+        isDirectory <- doesDirectoryExist path
+        return $ if isDirectory
+            then ([path],[])
+            else ([],[path])
+    childFiles <- mapM getSourceFilesForDir (concatMap fst paths)
+    let localFiles = concatMap snd paths
+    return $
+        concat childFiles ++
+        filter ((==) ".hs" . takeExtension) localFiles
