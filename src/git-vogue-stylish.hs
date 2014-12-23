@@ -5,14 +5,16 @@ import           Control.Applicative
 import           Control.Monad
 import           Data.Algorithm.Diff
 import           Data.Algorithm.DiffOutput
-import           Data.Monoid hiding (First)
+import           Data.Monoid               hiding (First)
 import           Language.Haskell.Stylish
 import           Options.Applicative
 import           System.Directory
 import           System.Exit
 import           System.FilePath
-import           System.IO              (hPutStrLn, stderr, withFile, hSetEncoding, IOMode(ReadMode), utf8)
-import           System.IO.Strict       (hGetContents)
+import           System.IO                 (IOMode (ReadMode), hPutStrLn,
+                                            hSetEncoding, stderr, utf8,
+                                            withFile)
+import           System.IO.Strict          (hGetContents)
 import           Utilities.HaskellFiles
 
 data Command
@@ -29,7 +31,7 @@ execute
 execute cmd = case cmd of
     CmdName  -> putStrLn "stylish"
     CmdCheck -> run ["./"] stylishCheckFile succeedIfAll
-    CmdFix   -> run ["./"] stylishRunFile (\_ -> exitSuccess)
+    CmdFix   -> run ["./"] stylishRunFile (const exitSuccess)
 
 optionsParser :: Parser Command
 optionsParser = subparser
@@ -60,7 +62,7 @@ run
 run dirs fn op = do
     files   <- mapM getSourceFilesForDir dirs
     cfg     <- getConfig
-    results <- mapM (flip fn cfg) $ concat files
+    results <- mapM (`fn` cfg) $ concat files
     op results
 
 -- | Exit with success if and only if all results are valid
@@ -124,16 +126,6 @@ filterDiff
 filterDiff (Both a b) = a /= b
 filterDiff _          = True
 
--- | Pretty-print a given string diff
--- printDiff
---     :: Diff String
---     -> IO ()
--- printDiff (First x)  = putStrLn $ "- " ++ x
--- printDiff (Second x) = putStrLn $ "+ " ++ x
--- printDiff (Both x y) = do
---     printDiff (First x)
---     printDiff (Second y)
-
 --------------------------------------------------------------------------------
 -- | Takes an original file, the Stylish version of the file, and does something
 -- depending on the outcome of the Stylish transformation.
@@ -169,5 +161,4 @@ readUTF8File
 readUTF8File fp =
      withFile fp ReadMode $ \h -> do
         hSetEncoding h utf8
-        content <- hGetContents h
-        return content
+        hGetContents h
