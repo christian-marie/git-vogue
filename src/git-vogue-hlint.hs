@@ -9,6 +9,7 @@ import           Options.Applicative
 import           System.Directory
 import           System.Exit
 import           System.FilePath
+import           Utilities.HaskellFiles
 
 data Command
     -- | Check the project for problems.
@@ -42,8 +43,8 @@ main = execParser opts >>= execute
   where
     opts = info (helper <*> optionsParser)
         ( fullDesc
-        <> progDesc "Check your Haskell project for cabal-related problems."
-        <> header "git-vogue-cabal - check for cabal problems" )
+        <> progDesc "Check your Haskell project for hlint-related problems."
+        <> header "git-vogue-hlint - check for hlint problems" )
 
 -- | Run hlint on a list of directories.
 hlintDirs :: [FilePath] -> IO ()
@@ -61,20 +62,3 @@ hlintFile :: (ParseFlags, [Classify], Hint) -> FilePath -> IO [Idea]
 hlintFile (flags, classify, hint) f = do
     Right m <- parseModuleEx flags f Nothing
     return $ applyHints classify hint [m]
-
--- | Get all source files recursively within a single directory.
-getSourceFilesForDir :: FilePath -> IO [FilePath]
-getSourceFilesForDir dir = do
-    contents <- getDirectoryContents dir
-    let properNames = filter (`notElem` [".", ".."]) contents
-    paths <- forM properNames $ \name -> do
-        let path = dir </> name
-        isDirectory <- doesDirectoryExist path
-        return $ if isDirectory
-            then ([path],[])
-            else ([],[path])
-    childFiles <- mapM getSourceFilesForDir (concatMap fst paths)
-    let localFiles = concatMap snd paths
-    return $
-        concat childFiles ++
-        filter ((==) ".hs" . takeExtension) localFiles
