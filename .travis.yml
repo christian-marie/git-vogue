@@ -7,7 +7,7 @@ notifications:
 before_install:
   - cabal update
   - cabal install cabal-install
-  - cabal install happy
+  - cabal install alex happy
 script:
   - cabal configure --enable-tests
   - cabal build
