@@ -62,6 +62,7 @@ main = hspec $ do
         it "check fails on exploding module" $
             runCheckExecutor "exploding"
                              (Catastrophe "exploding" "half-life 3 confirmed\n")
+
         it "fix fails on failing module" $
             runFixExecutor "failing"
                              (Failure "failing" "ohnoes\n")

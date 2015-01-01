@@ -3,6 +3,9 @@ if [ x"$1" = x"name" ]; then
     echo "succeeding"
     exit 0
 else
-    echo "yay"
-    exit 0
+    if [ x"$*" = x"file1" ]; then
+	echo "yay"
+        exit 0
+    fi
+    exit 1
 fi

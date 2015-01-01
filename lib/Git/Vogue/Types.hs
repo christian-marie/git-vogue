@@ -37,8 +37,11 @@ newtype PluginName = PluginName {
     unPluginName :: Text
 } deriving (Show, Ord, Eq, IsString, Monoid)
 
+-- | We want the flexibility of just checking changed files, or maybe checking
+-- all of them.
+data PluginFiles = All | Changed
 -- | An implementation of a "runner" of plugins. Mostly for easy testing.
 data PluginExecutorImpl m = PluginExecutorImpl{
-    executeFix   :: Plugin -> m (Status Fix),
-    executeCheck :: Plugin -> m (Status Check)
+    executeFix   :: Plugin -> PluginFiles -> m (Status Fix),
+    executeCheck :: Plugin -> PluginFiles -> m (Status Check)
 }
