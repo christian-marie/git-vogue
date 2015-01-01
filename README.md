@@ -31,6 +31,22 @@ git vogue init
 
 This one time command will setup the git hooks and other requirements to latch itself onto your repository. Once installed, *git-vogue*'s functionality is seamlessly integrated into your git workflow, making it an intrinsic part of your development cycle.
 
+Testing
+-------
+
+To run the built-in tests, run
+
+```bash
+cabal test
+```
+
+There are two sets of acceptance tests in the tests directory, that test against different sources of packages. To run them, run the following:
+
+```bash
+tests/acceptance-tests
+tests/acceptance-tests-2
+```
+
 Rationale
 ---------
 

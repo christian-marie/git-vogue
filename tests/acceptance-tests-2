@@ -65,8 +65,8 @@ if [[ ! ${OUT} =~ .*"hlint succeeded with".* ]]; then
 	fail "hlint did not succeed"
 fi
 
-if [[ ! ${OUT} =~ .*"Stylish Haskell failed with".* ]]; then
-	fail "stylish haskell failed with"
+if [[ ! ${OUT} =~ .*"stylish succeeded with".* ]]; then
+	fail "stylish haskell did not succeed"
 fi
 
 popd > /dev/null
@@ -95,9 +95,8 @@ if [[ ! ${OUT} =~ .*"hlint failed with".* ]]; then
 	fail "hlint did not fail"
 fi
 
-# @TODO: Fix test so stylish succeeds.
-if [[ ! ${OUT} =~ .*"Stylish Haskell failed with".* ]]; then
-	fail "stylish haskell did not fail"
+if [[ ! ${OUT} =~ .*"stylish succeeded with".* ]]; then
+	fail "stylish haskell did not succeed"
 fi
 
 popd > /dev/null
@@ -126,7 +125,7 @@ if [[ ! ${OUT} =~ .*"hlint succeeded with".* ]]; then
 	fail "hlint did not succeed"
 fi
 
-if [[ ! ${OUT} =~ .*"Stylish Haskell failed with".* ]]; then
+if [[ ! ${OUT} =~ .*"stylish failed with".* ]]; then
 	fail "stylish haskell did not fail"
 fi
 
@@ -155,7 +154,7 @@ if [[ ! ${OUT} =~ .*"hlint succeeded with".* ]]; then
 	fail "hlint did not succeed"
 fi
 
-if [[ ! ${OUT} =~ .*"Stylish Haskell succeeded with".* ]]; then
+if [[ ! ${OUT} =~ .*"stylish succeeded with".* ]]; then
 	fail "stylish haskell did not succeed"
 fi
 
