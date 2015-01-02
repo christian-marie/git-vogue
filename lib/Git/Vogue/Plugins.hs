@@ -13,13 +13,19 @@ module Git.Vogue.Plugins where
 
 import           Git.Vogue.Types
 
+import           Control.Applicative
+import           Control.Monad
 import           Control.Monad.IO.Class
+import           Data.Foldable
 import           Data.Monoid
 import           Data.String
 import           Data.String.Utils
-import           Data.Text              (Text)
-import qualified Data.Text              as T
-import qualified Data.Text.IO           as T
+import           Data.Text.Lazy         (Text)
+import qualified Data.Text.Lazy         as T
+import qualified Data.Text.Lazy.IO      as T
+import           Formatting
+import           Prelude                hiding (maximum)
+import           System.Directory
 import           System.Exit
 import           System.Process
 
@@ -32,15 +38,23 @@ ioPluginExecutorImpl =
     -- appropriately.
     --
     -- This involves the interface described in README under "Plugin design".
-    f :: MonadIO m => String -> Plugin -> m (Status a)
-    f arg (Plugin path) = liftIO $ do
+    f :: MonadIO m => String -> SearchMode -> Plugin -> m (Status a)
+    f arg sm (Plugin path) = liftIO $ do
         name <- getName path
-        (status, stdout, stderr) <- readProcessWithExitCode path [arg] mempty
-        let glommed = fromString $ stdout <> stderr
+        fs <- unlines <$> (paths sm >>= filterM doesFileExist . lines)
+        (status, out, err) <- readProcessWithExitCode path [arg] fs
+        let glommed = fromString $ out <> err
+
         return $ case status of
             ExitSuccess   -> Success name glommed
             ExitFailure 1 -> Failure name glommed
-            ExitFailure _ -> Catastrophe name glommed
+            ExitFailure n -> Catastrophe n name glommed
+
+    paths :: SearchMode -> IO String
+    paths FindChanged = git ["diff", "--cached", "--name-only"]
+    paths FindAll     = git ["ls-files"]
+
+    git args = readProcess "git" args ""
 
     getName path = do
         (status, name, _) <- readProcessWithExitCode path ["name"] mempty
@@ -49,9 +63,18 @@ ioPluginExecutorImpl =
             ExitFailure _ -> path
 
 colorize :: Status a -> Text
-colorize (Success     (PluginName x) y) = "\x1b[32m" <> x <> " succeeded with " <> y <> "\x1b[0m"
-colorize (Failure     (PluginName x) y) = "\x1b[33m" <> x <> " failed with "    <> y <> "\x1b[0m"
-colorize (Catastrophe (PluginName x) y) = "\x1b[31m" <> x <> " exploded with "  <> y <> "\x1b[0m"
+colorize (Success     (PluginName x) y) =
+    format ("\x1b[32m" % text % " succeeded with:\n" % text % "\x1b[0m") x y
+colorize (Failure     (PluginName x) y) =
+    format ("\x1b[33m" % text % " failed with:\n" % text % "\x1b[0m") x y
+colorize (Catastrophe n (PluginName x) y) =
+    format ("\x1b[31m"
+           % text
+           % " exploded with exit code "
+           % int
+           %":\n"
+           % text
+           % "\x1b[0m" ) x n y
 
 -- | Output the result of a Plugin and exit with an appropriate return code
 outputStatusAndExit
@@ -66,7 +89,7 @@ outputStatusAndExit status = liftIO $
         Failure _ output -> do
             T.putStrLn output
             exitWith $ ExitFailure 1
-        Catastrophe _ output -> do
+        Catastrophe _ _ output -> do
             T.putStrLn output
             exitWith $ ExitFailure 2
 
@@ -84,4 +107,4 @@ insertMax rs txt =
     case maximum rs of
         Success{} -> Success mempty txt
         Failure{} -> Failure mempty txt
-        Catastrophe{} -> Catastrophe mempty txt
+        Catastrophe{} -> Catastrophe 0 mempty txt

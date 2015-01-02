@@ -1,64 +1,36 @@
 -- | Description: Check with "cabal check".
 module Main where
 
-import           Control.Applicative
-import           Control.Monad
+import           Common
 import           Data.Monoid
+import           Data.Traversable
 import           Language.Haskell.HLint3
-import           Options.Applicative
-import           System.Directory
 import           System.Exit
-import           System.FilePath
-import           Utilities.HaskellFiles
-
-data Command
-    -- | Check the project for problems.
-    = CmdCheck
-    -- | Fix problems in the project.
-    | CmdFix
-    -- | Report details.
-    | CmdName
-
-execute
-    :: Command
-    -> IO ()
-execute cmd = case cmd of
-    CmdName  -> putStrLn "hlint"
-    CmdCheck -> hlintDirs ["./"]
-    CmdFix   -> exitFailure
-
-optionsParser :: Parser Command
-optionsParser = subparser
-    (  command "name" (info pName mempty)
-    <> command "check" (info pCheck mempty)
-    <> command "fix" (info pFix mempty)
-    )
-  where
-    pName = pure CmdName
-    pCheck = pure CmdCheck
-    pFix = pure CmdFix
 
 main :: IO ()
-main = execParser opts >>= execute
+main =
+    f =<< getPluginCommand
+            "Check your Haskell project for hlint-related problems."
+            "git-vogue-hlint - check for hlint problems"
   where
-    opts = info (helper <*> optionsParser)
-        ( fullDesc
-        <> progDesc "Check your Haskell project for hlint-related problems."
-        <> header "git-vogue-hlint - check for hlint problems" )
+    f CmdName  = putStrLn "hlint"
+    f CmdCheck = lint
+    f CmdFix   = putStrLn "you need to fix hlint failures" >> exitFailure
 
--- | Run hlint on a list of directories.
-hlintDirs :: [FilePath] -> IO ()
-hlintDirs dirs = do
-    s <- autoSettings
-    files <- mapM getSourceFilesForDir dirs
-    ig <- mapM (hlintFile s) $ concat files
-    let ideas = concat ig
-    unless (null ideas) $
-        do  print ideas
-            exitFailure
+-- | Lint all of the .hs files from stdin
+lint ::  IO ()
+lint = do
+    files <- hsFiles
+    (flags, classify, hint) <- autoSettings
+    parsed <- traverse (\f -> parseModuleEx flags f Nothing) files
 
--- | Run hlint on a single file.
-hlintFile :: (ParseFlags, [Classify], Hint) -> FilePath -> IO [Idea]
-hlintFile (flags, classify, hint) f = do
-    Right m <- parseModuleEx flags f Nothing
-    return $ applyHints classify hint [m]
+    let ideas = applyHints classify hint [ x | Right x <- parsed]
+    let errors = [ parseErrorMessage x
+                <> show (parseErrorLocation x) | Left x <- parsed ]
+    let out = unlines errors <> "\n" <>  show ideas
+
+    if null ideas && null errors
+      then do
+        putStrLn ("checked " <> show (length files) <> " files")
+        exitSuccess
+      else putStrLn out >> exitFailure

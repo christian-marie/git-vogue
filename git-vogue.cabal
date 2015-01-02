@@ -30,8 +30,8 @@ library
                      , directory
                      , filepath
                      , process
+                     , formatting
                      , split
-                     , pipes
                      , text
                      , transformers
                      , mtl
@@ -110,3 +110,6 @@ test-suite test-plugins
                      , transformers
                      , transformers-base
                      , unix
+
+-- vim: set tabstop=21 expandtab:
+
