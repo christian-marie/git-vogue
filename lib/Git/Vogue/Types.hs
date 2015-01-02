@@ -13,7 +13,7 @@ module Git.Vogue.Types where
 
 import           Data.Monoid
 import           Data.String
-import           Data.Text   (Text)
+import           Data.Text.Lazy (Text)
 
 -- | Phantom type for Statuses related to checking
 data Check
@@ -24,7 +24,7 @@ data Fix
 data Status a
     = Success PluginName Text
     | Failure PluginName Text
-    | Catastrophe PluginName Text
+    | Catastrophe Int PluginName Text
   deriving (Show, Ord, Eq)
 
 -- | Absolute path to an executable
@@ -37,8 +37,12 @@ newtype PluginName = PluginName {
     unPluginName :: Text
 } deriving (Show, Ord, Eq, IsString, Monoid)
 
+-- | We want the flexibility of just checking changed files, or maybe checking
+-- all of them.
+data SearchMode = FindAll | FindChanged
+
 -- | An implementation of a "runner" of plugins. Mostly for easy testing.
 data PluginExecutorImpl m = PluginExecutorImpl{
-    executeFix   :: Plugin -> m (Status Fix),
-    executeCheck :: Plugin -> m (Status Check)
+    executeFix   :: SearchMode -> Plugin -> m (Status Fix),
+    executeCheck :: SearchMode -> Plugin -> m (Status Check)
 }

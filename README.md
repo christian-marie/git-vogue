@@ -67,7 +67,12 @@ Plugin design
 * fix
 * name
 
-The plugin can assume that the CWD will be set to the top-level directory of the package.
+The plugin can assume that the CWD will be set to the top-level directory of
+the package.
+
+The plugin will receive a list of all files in the current repository that are
+not to be ignored via STDIN when running in "check" or "fix" mode. These file
+paths will be absolute and newline separated.
 
 **Rules for each plugin**
 

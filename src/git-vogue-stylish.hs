@@ -1,77 +1,50 @@
 -- | Description: Check with "cabal check".
 module Main where
 
+import           Common
 import           Control.Applicative
-import           Control.Monad
 import           Data.Algorithm.Diff
 import           Data.Algorithm.DiffOutput
+import           Data.List
 import           Data.Monoid               hiding (First)
 import           Language.Haskell.Stylish
-import           Options.Applicative
-import           System.Directory
 import           System.Exit
-import           System.FilePath
-import           System.IO                 (IOMode (ReadMode), hPutStrLn,
-                                            hSetEncoding, stderr, utf8,
-                                            withFile)
+import           System.IO                 hiding (hGetContents)
 import           System.IO.Strict          (hGetContents)
-import           Utilities.HaskellFiles
-
-data Command
-    -- | Check the project for problems.
-    = CmdCheck
-    -- | Fix problems in the project.
-    | CmdFix
-    -- | Report details.
-    | CmdName
-
-execute
-    :: Command
-    -> IO ()
-execute cmd = case cmd of
-    CmdName  -> putStrLn "stylish"
-    CmdCheck -> run ["./"] stylishCheckFile succeedIfAll
-    CmdFix   -> run ["./"] stylishRunFile (const exitSuccess)
-
-optionsParser :: Parser Command
-optionsParser = subparser
-    (  command "name" (info pName mempty)
-    <> command "check" (info pCheck mempty)
-    <> command "fix" (info pFix mempty)
-    )
-  where
-    pName = pure CmdName
-    pCheck = pure CmdCheck
-    pFix = pure CmdFix
 
 main :: IO ()
-main = execParser opts >>= execute
+main =
+    f =<< getPluginCommand
+            "Check your Haskell project for stylish-haskell-related problems."
+            "git-vogue-stylish - check for stylish-haskell problems"
   where
-    opts = info (helper <*> optionsParser)
-        ( fullDesc
-        <> progDesc "Check your Haskell project for stylish-haskell-related problems."
-        <> header "git-vogue-stylish - check for stylish-haskell problems" )
+    f CmdName  = putStrLn "stylish"
+    f CmdCheck = run stylishCheckFile succeedIfAll
+    f CmdFix   = run stylishRunFile (const exitSuccess)
 
 --------------------------------------------------------------------------------
 -- | Run a stylish operation and do something depending on the result
 run
-    :: [FilePath] -- ^ Directories to run Stylish across
-    -> (FilePath -> Config -> IO a) -- ^ Runs Stylish and gets a result
+    :: Show a => (FilePath -> Config -> IO a) -- ^ Runs Stylish and gets a result
     -> ([a] -> IO b) -- ^ Transforms a list of results into an exit code
     -> IO b -- ^ Exit code
-run dirs fn op = do
-    files   <- mapM getSourceFilesForDir dirs
-    cfg     <- getConfig
-    results <- mapM (`fn` cfg) $ concat files
+run fn op = do
+    files <- filter (isSuffixOf ".hs") . lines <$> getContents
+    cfg <- getConfig
+    results <- mapM (`fn` cfg) files
     op results
 
 -- | Exit with success if and only if all results are valid
 succeedIfAll
     :: [Bool] -- ^ List of results
     -> IO b -- ^ Exit code
-succeedIfAll r = do
-    unless (and r) exitFailure
-    exitSuccess
+succeedIfAll rs =
+    if and rs
+        then do
+            putStrLn $ "Checked " <> show (length rs) <> " files"
+            exitSuccess
+        else
+            exitFailure
 
 --------------------------------------------------------------------------------
 -- | Gets the default configuration at `data/stylish-haskell.yaml`.
@@ -104,7 +77,7 @@ stylishRunFile
 stylishRunFile fp cfg = stylishFile fp cfg (\original stylish ->
     case getStyleDiffs original stylish of
         [] -> return ()
-        x  -> do
+        _  -> do
             writeFile fp stylish
             return ()
     )

@@ -15,6 +15,7 @@ import           System.FilePath
 import           Git.Vogue
 import           Git.Vogue.Types
 
+import           Common
 import qualified Paths_git_vogue           as Paths
 
 -- | Parse command line options.
@@ -22,21 +23,27 @@ optionsParser :: Parser VogueCommand
 optionsParser = subparser
     ( command "init" (info pInit
         (progDesc "Initialise git-vogue support in a git repo"))
-    <> command "verify" (info pVerify
-        (progDesc "Check git-vogue support is all legit"))
-    <> command "check" (info pCheck
-        (progDesc "Run check plugins on a git repo"))
-    <> command "fix" (info pFix
-        (progDesc "Run fix plugins on a git repo"))
+    <> pCommand "verify"
+                CmdVerify
+                "Check git-vogue support is all legit"
+    <> pCommand "check"
+                CmdRunCheckChanged
+                "Run check plugins on all files in a git repo"
+    <> pCommand "check-all"
+                CmdRunCheckAll
+                "Run fix plugins on a git repo"
+    <> pCommand "fix"
+                CmdRunFixChanged
+                "Run fix plugins on a git repo"
+    <> pCommand "fix-all"
+                CmdRunFixAll
+                "Run fix plugins on a git repo"
     )
   where
     pInit = CmdInit <$> option (Just <$> readerAsk)
         (  long "template"
         <> value Nothing
         )
-    pVerify = pure CmdVerify
-    pCheck = pure CmdRunCheck
-    pFix = pure CmdRunFix
 
 -- | Discover all available plugins.
 --

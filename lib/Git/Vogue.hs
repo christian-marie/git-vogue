@@ -42,9 +42,12 @@ data VogueCommand
     -- | List the plugins that git-vogue knows about.
     | CmdList
     -- | Run check plugins on a git repository.
-    | CmdRunCheck
+    | CmdRunCheckChanged
+    -- | Run check plugins on a git repository.
+    | CmdRunCheckAll
     -- | Run fix plugins on a git repository.
-    | CmdRunFix
+    | CmdRunFixChanged
+    | CmdRunFixAll
   deriving (Eq, Show)
 
 -- | Plugins that git-vogue knows about.
@@ -69,12 +72,15 @@ runCommand
 runCommand CmdInit{..} = runWithRepoPath (gitAddHook templatePath)
 runCommand CmdVerify   = error "Not implemented: verify"
 runCommand CmdList     = gitListHook
-runCommand CmdRunCheck =   ask
-                       >>= checkPlugins ioPluginExecutorImpl
-                       >>= outputStatusAndExit
-runCommand CmdRunFix   = ask
-                       >>= fixPlugins ioPluginExecutorImpl
-                       >>= outputStatusAndExit
+runCommand CmdRunCheckChanged = executeIOPlugin FindChanged  executeCheck
+runCommand CmdRunCheckAll = executeIOPlugin FindAll executeCheck
+runCommand CmdRunFixChanged = executeIOPlugin FindChanged  executeFix
+runCommand CmdRunFixAll = executeIOPlugin FindAll executeFix
+
+executeIOPlugin search_mode f =
+    ask
+    >>= concatMapPlugin (f ioPluginExecutorImpl search_mode)
+    >>= outputStatusAndExit
 
 -- | Find the git repository path and pass it to an action.
 --

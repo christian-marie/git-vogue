@@ -21,15 +21,9 @@ import           Test.Hspec
 import           Git.Vogue.Plugins
 import           Git.Vogue.Types
 
-failingPluginExecutorImpl :: PluginExecutorImpl IO
-failingPluginExecutorImpl =
-        PluginExecutorImpl (const . return $ Failure mempty mempty)
-                           (const . return $ Failure mempty mempty)
-
-succeedingPluginExecutorImpl :: PluginExecutorImpl IO
-succeedingPluginExecutorImpl =
-        PluginExecutorImpl (const . return $ Success mempty mempty)
-                           (const . return $ Success mempty mempty)
+failingExecutor, succeedingExecutor :: b -> IO (Status a)
+failingExecutor    = const . return $ Failure mempty mempty
+succeedingExecutor = const . return $ Success mempty mempty
 
 main :: IO ()
 main = hspec $ do
@@ -39,52 +33,56 @@ main = hspec $ do
                 `shouldBe` Failure mempty mempty
 
         it "fails if one module fails" $ do
-            checkPlugins failingPluginExecutorImpl ["a", "b"]
-              >>= (`shouldBe` Failure mempty "\x1b[33m failed with \x1b[0m\n\x1b[33m failed with \x1b[0m\n")
-            fixPlugins failingPluginExecutorImpl ["monkey"]
-              >>= (`shouldBe` Failure mempty "\x1b[33m failed with \x1b[0m\n")
+            concatMapPlugin failingExecutor ["a", "b"]
+              >>= (`shouldBe` Failure mempty "\x1b[33m failed with:\n\x1b[0m\n\x1b[33m failed with:\n\x1b[0m\n")
+            concatMapPlugin failingExecutor  ["monkey"]
+              >>= (`shouldBe` Failure mempty "\x1b[33m failed with:\n\x1b[0m\n")
 
         it "succeeds if all modules succeed" $ do
-            checkPlugins succeedingPluginExecutorImpl ["a", "b"]
-              >>= (`shouldBe` Success mempty "\x1b[32m succeeded with \x1b[0m\n\x1b[32m succeeded with \x1b[0m\n")
-            fixPlugins succeedingPluginExecutorImpl ["monkey"]
-              >>= (`shouldBe` Success mempty "\x1b[32m succeeded with \x1b[0m\n")
+            concatMapPlugin succeedingExecutor ["a", "b"]
+              >>= (`shouldBe` Success mempty "\x1b[32m succeeded with:\n\x1b[0m\n\x1b[32m succeeded with:\n\x1b[0m\n")
+            concatMapPlugin succeedingExecutor ["monkey"]
+              >>= (`shouldBe` Success mempty "\x1b[32m succeeded with:\n\x1b[0m\n")
 
     describe "IO module executor" $ do
-        it "check fails on failing module" $
-            runCheckExecutor "failing"
-                             (Failure "failing" "ohnoes\n")
+        describe "check" $ do
+            it "fails on failing module" $
+                runCheckExecutor FindAll "failing"
+                                (Failure "failing" "ohnoes\n")
 
-        it "check fails on succeeding module" $
-            runCheckExecutor "succeeding"
-                             (Success "succeeding" "yay\n")
+            it "fails on succeeding module" $
+                runCheckExecutor FindAll "succeeding"
+                                (Success "succeeding" "yay\n")
 
-        it "check fails on exploding module" $
-            runCheckExecutor "exploding"
-                             (Catastrophe "exploding" "half-life 3 confirmed\n")
-        it "fix fails on failing module" $
-            runFixExecutor "failing"
-                             (Failure "failing" "ohnoes\n")
+            it "fails on exploding module" $
+                runCheckExecutor FindAll "exploding"
+                                (Catastrophe 3 "exploding" "something broke\n")
 
-        it "fix fails on succeeding module" $
-            runFixExecutor "succeeding"
-                             (Success "succeeding" "yay\n")
+        describe "fix" $ do
+            it "fails on failing module" $
+                runFixExecutor FindAll "failing"
+                                (Failure "failing" "ohnoes\n")
 
-        it "fix fails on exploding module" $
-            runFixExecutor "exploding"
-                             (Catastrophe "exploding" "half-life 3 confirmed\n")
+            it "fails on succeeding module" $
+                runFixExecutor FindAll "succeeding"
+                                (Success "succeeding" "yay\n")
 
-runCheckExecutor :: FilePath -> Status Check -> Expectation
+            it "fails on exploding module" $
+                runFixExecutor FindAll "exploding"
+                                (Catastrophe 3 "exploding" "something broke\n")
+
+runCheckExecutor :: SearchMode -> FilePath -> Status Check -> Expectation
 runCheckExecutor = runTestExecutor executeCheck
 
-runFixExecutor :: FilePath -> Status Fix -> Expectation
+runFixExecutor :: SearchMode -> FilePath -> Status Fix -> Expectation
 runFixExecutor = runTestExecutor executeFix
 
 runTestExecutor
-    :: (PluginExecutorImpl IO -> Plugin -> IO (Status a))
+    :: (PluginExecutorImpl IO -> SearchMode -> Plugin -> IO (Status a))
+    -> SearchMode
     -> FilePath
     -> Status a
     -> Expectation
-runTestExecutor act file expected =
-    act ioPluginExecutorImpl (Plugin ("fixtures" </> file))
+runTestExecutor act search_mode file expected =
+    act ioPluginExecutorImpl search_mode (Plugin ("fixtures" </> file))
       >>= (`shouldBe` expected)

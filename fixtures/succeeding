@@ -3,6 +3,11 @@ if [ x"$1" = x"name" ]; then
     echo "succeeding"
     exit 0
 else
-    echo "yay"
-    exit 0
+    read n
+    if [ x"$n" = x".gitignore" ]; then
+	echo "yay"
+        exit 0
+    fi
+    echo "No files"
+    exit 1
 fi
