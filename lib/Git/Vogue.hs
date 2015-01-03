@@ -12,6 +12,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE RecordWildCards            #-}
+{-# LANGUAGE TupleSections              #-}
 {-# LANGUAGE TypeFamilies               #-}
 
 module Git.Vogue where
@@ -66,20 +67,33 @@ runVogue ps (Vogue act) = runReaderT act ps
 
 -- | Execute a git-vogue command.
 runCommand
-    :: MonadIO m
+    :: (MonadIO m, Functor m)
     => VogueCommand
     -> Vogue m ()
-runCommand CmdInit{..} = runWithRepoPath (gitAddHook templatePath)
-runCommand CmdVerify   = error "Not implemented: verify"
-runCommand CmdList     = gitListHook
-runCommand CmdRunCheckChanged = executeIOPlugin FindChanged  executeCheck
-runCommand CmdRunCheckAll = executeIOPlugin FindAll executeCheck
-runCommand CmdRunFixChanged = executeIOPlugin FindChanged  executeFix
-runCommand CmdRunFixAll = executeIOPlugin FindAll executeFix
+runCommand CmdInit{..}        = runWithRepoPath (gitAddHook templatePath)
+runCommand CmdVerify          = error "Not implemented: verify"
+runCommand CmdList            = gitListHook
+runCommand CmdRunCheckChanged = runCheck FindChanged
+runCommand CmdRunCheckAll     = runCheck FindAll
+runCommand CmdRunFixChanged   = runFix FindChanged
+runCommand CmdRunFixAll       = runFix FindAll
 
-executeIOPlugin search_mode f =
+
+-- | Try to fix the broken things. We first do one pass to check what's broken,
+-- then only run fix on those.
+runFix :: (MonadIO m, Functor m) => SearchMode -> Vogue m ()
+runFix sm = do
+    -- See which plugins failed first
+    rs <- ask >>= mapM (\x -> (x,) <$> executeCheck ioPluginExecutorImpl sm x)
+    -- Now fix the failed ones only
+    getWorst (executeFix ioPluginExecutorImpl sm) [ x | (x, Failure{}) <- rs ]
+    >>= outputStatusAndExit
+
+-- | Check for broken things.
+runCheck :: MonadIO m => SearchMode -> Vogue m ()
+runCheck sm =
     ask
-    >>= concatMapPlugin (f ioPluginExecutorImpl search_mode)
+    >>= getWorst (executeCheck ioPluginExecutorImpl sm)
     >>= outputStatusAndExit
 
 -- | Find the git repository path and pass it to an action.
