@@ -2,21 +2,17 @@ module Main where
 
 import           Control.Monad
 import           Data.List
-import           Data.Monoid
-import           Distribution.PackageDescription    (BuildInfo (..),
-                                                     Executable (..),
-                                                     PackageDescription (..),
-                                                     emptyBuildInfo)
+import           Distribution.PackageDescription    (PackageDescription (..))
 import           Distribution.Simple
 import           Distribution.Simple.Install
 import           Distribution.Simple.LocalBuildInfo
 import           Distribution.Simple.Setup
 import           Distribution.Simple.Utils
-import           System.Directory
 import           System.FilePath
 
 -- | Run cabal with custom copyHook which puts our extra executables in the
 -- libexec directory.
+main :: IO ()
 main = defaultMainWithHooks $ simpleUserHooks
     { copyHook = copyThings
     }
