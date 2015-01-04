@@ -33,15 +33,15 @@ main = hspec $ do
                 `shouldBe` Failure mempty mempty
 
         it "fails if one module fails" $ do
-            concatMapPlugin failingExecutor ["a", "b"]
+            getWorst failingExecutor ["a", "b"]
               >>= (`shouldBe` Failure mempty "\x1b[33m failed with:\n\x1b[0m\n\x1b[33m failed with:\n\x1b[0m\n")
-            concatMapPlugin failingExecutor  ["monkey"]
+            getWorst failingExecutor  ["monkey"]
               >>= (`shouldBe` Failure mempty "\x1b[33m failed with:\n\x1b[0m\n")
 
         it "succeeds if all modules succeed" $ do
-            concatMapPlugin succeedingExecutor ["a", "b"]
+            getWorst succeedingExecutor ["a", "b"]
               >>= (`shouldBe` Success mempty "\x1b[32m succeeded with:\n\x1b[0m\n\x1b[32m succeeded with:\n\x1b[0m\n")
-            concatMapPlugin succeedingExecutor ["monkey"]
+            getWorst succeedingExecutor ["monkey"]
               >>= (`shouldBe` Success mempty "\x1b[32m succeeded with:\n\x1b[0m\n")
 
     describe "IO module executor" $ do
