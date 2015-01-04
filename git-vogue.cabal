@@ -67,6 +67,7 @@ executable git-vogue-hlint
                      , directory
                      , filepath
                      , hlint
+                     , haskell-src-exts
                      , optparse-applicative >= 0.11
                      , process
 

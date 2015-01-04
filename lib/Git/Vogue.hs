@@ -152,6 +152,6 @@ copyHookTemplateTo maybe_t hook = do
 gitListHook :: MonadIO m => Vogue m ()
 gitListHook = do
   plugins <- ask
-  liftIO $  putStrLn
+  liftIO .  putStrLn
          $  "git-vogue knows about the following plugins: "
          <> show plugins

@@ -43,10 +43,10 @@ copyThings pkg lbi _ flags = do
     --
     -- This was stolen from "Distribution.Simple.Install" and hacked. Why is
     -- cabal so terrible compared to make and friends?
-    let scripts = map stripPluginPrefix . filter isPlugin $ dataFiles pkg
+    let scripts = fmap stripPluginPrefix . filter isPlugin $ dataFiles pkg
         verbosity = fromFlag (copyVerbosity flags)
         src_data_dir = dataDir sub_pkg
-        dest_data_dir = datadir $ absoluteInstallDirs sub_pkg sub_lbi $
+        dest_data_dir = datadir . absoluteInstallDirs sub_pkg sub_lbi $
                         fromFlag (copyDest flags)
     forM_ scripts $ \ file -> do
         let dir = takeDirectory file

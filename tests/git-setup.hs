@@ -28,14 +28,12 @@ import           Git.Vogue
 
 main :: IO ()
 main = hspec . describe "Git repository setup" $ do
-    it "should install a new pre-commit hook" $
-        withGitRepo $ \path -> do
+    it "should install a new pre-commit hook" . withGitRepo $ \path -> do
             let hook = path </> ".git" </> "hooks" </> "pre-commit"
 
             shouldInstallWorking path hook
 
-    it "should skip an already correct pre-commit hook" $
-        withGitRepo $ \path -> do
+    it "should skip a correct pre-commit hook" . withGitRepo $ \path -> do
             let hook = path </> ".git" </> "hooks" </> "pre-commit"
 
             -- Create an existing hook to update.
@@ -43,20 +41,19 @@ main = hspec . describe "Git repository setup" $ do
 
             shouldInstallWorking path hook
 
-    it "should report a conflict pre-commit hook" $
-        withGitRepo $ \path -> do
-            let hook = path </> ".git" </> "hooks" </> "pre-commit"
+    it "should report a conflict pre-commit hook" . withGitRepo $ \path -> do
+        let hook = path </> ".git" </> "hooks" </> "pre-commit"
 
-            -- Create an existing hook to update.
-            writeFile hook "echo YAY\n"
-            setPermissions hook $ emptyPermissions
-                { readable = True
-                , executable = True
-                }
+        -- Create an existing hook to update.
+        writeFile hook "echo YAY\n"
+        setPermissions hook $ emptyPermissions
+            { readable = True
+            , executable = True
+            }
 
-            -- Run the setup program.
-            code <- runInRepo path
-            code `shouldBe` ExitFailure 1
+        -- Run the setup program.
+        code <- runInRepo path
+        code `shouldBe` ExitFailure 1
 
 -- | Run "git-vogue init" and check we wind up with a working pre-commit hook.
 shouldInstallWorking :: FilePath -> FilePath -> IO ()
