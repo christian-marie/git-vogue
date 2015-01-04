@@ -41,6 +41,7 @@ newtype PluginName = PluginName {
 -- | We want the flexibility of just checking changed files, or maybe checking
 -- all of them.
 data SearchMode = FindAll | FindChanged
+  deriving (Eq, Show)
 
 -- | An implementation of a "runner" of plugins. Mostly for easy testing.
 data PluginExecutorImpl m = PluginExecutorImpl{

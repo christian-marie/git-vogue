@@ -35,6 +35,13 @@ import           Git.Vogue.Plugins
 import           Git.Vogue.Types
 import           Paths_git_vogue
 
+-- | Options parsed from the command-line.
+data VogueOptions = Options
+    { optSearch  :: SearchMode
+    , optCommand :: VogueCommand
+    }
+  deriving (Eq, Show)
+
 -- | Commands, with parameters, to be executed.
 data VogueCommand
     -- | Add git-vogue support to a git repository.
@@ -43,14 +50,10 @@ data VogueCommand
     | CmdVerify
     -- | List the plugins that git-vogue knows about.
     | CmdList
-    -- | Run check plugins on changed files in a git repository.
-    | CmdRunCheckChanged
-    -- | Run check plugins on all files in a git repository.
-    | CmdRunCheckAll
-    -- | Run fix plugins on changed files in a git repository.
-    | CmdRunFixChanged
-    -- | Run fix plugins on all files in a git repository.
-    | CmdRunFixAll
+    -- | Run check plugins on files in a git repository.
+    | CmdRunCheck
+    -- | Run fix plugins on files in a git repository.
+    | CmdRunFix
   deriving (Eq, Show)
 
 -- | Plugins that git-vogue knows about.
@@ -71,14 +74,13 @@ runVogue ps (Vogue act) = runReaderT act ps
 runCommand
     :: (MonadIO m, Functor m)
     => VogueCommand
+    -> SearchMode
     -> Vogue m ()
-runCommand CmdInit{..}        = runWithRepoPath (gitAddHook templatePath)
-runCommand CmdVerify          = runWithRepoPath (gitCheckHook runsVogue)
-runCommand CmdList            = gitListHook
-runCommand CmdRunCheckChanged = runCheck FindChanged
-runCommand CmdRunCheckAll     = runCheck FindAll
-runCommand CmdRunFixChanged   = runFix FindChanged
-runCommand CmdRunFixAll       = runFix FindAll
+runCommand CmdInit{..} _ = runWithRepoPath (gitAddHook templatePath)
+runCommand CmdVerify   _ = runWithRepoPath (gitCheckHook runsVogue)
+runCommand CmdList     _ = gitListHook
+runCommand CmdRunCheck search = runCheck search
+runCommand CmdRunFix   search = runFix search
 
 -- | Try to fix the broken things. We first do one pass to check what's broken,
 -- then only run fix on those.

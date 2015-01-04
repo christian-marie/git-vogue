@@ -28,26 +28,29 @@ import           Git.Vogue.Types
 import           Common
 import qualified Paths_git_vogue           as Paths
 
--- | Parse command line options.
-optionsParser :: Parser VogueCommand
-optionsParser = subparser
+-- | Parse command-line options.
+optionsParser :: Parser VogueOptions
+optionsParser = Options
+    <$> flag FindChanged FindAll
+        (  long "all"
+        <> short 'A'
+        <> help "Apply to all files, not just changed files."
+        )
+    <*> commandParser
+
+commandParser :: Parser VogueCommand
+commandParser = subparser
     ( command "init" (info pInit
         (progDesc "Initialise git-vogue support in a git repo"))
     <> pCommand "verify"
                 CmdVerify
                 "Check git-vogue support is all legit"
     <> pCommand "check"
-                CmdRunCheckChanged
-                "Run check plugins on changed files in a git repo"
-    <> pCommand "check-all"
-                CmdRunCheckAll
-                "Run check plugins on all files in a git repo"
+                CmdRunCheck
+                "Run check plugins on files in a git repo"
     <> pCommand "fix"
-                CmdRunFixChanged
-                "Run fix plugins on changed files a git repo"
-    <> pCommand "fix-all"
-                CmdRunFixAll
-                "Run fix plugins on all files in a git repo"
+                CmdRunFix
+                "Run fix plugins on files a git repo"
     )
   where
     pInit = CmdInit <$> option (Just <$> readerAsk)
@@ -85,9 +88,9 @@ discoverPlugins = do
 -- | Parse the command line and run the command.
 main :: IO ()
 main = do
-  cmd <- execParser opts
+  opt <- execParser opts
   plugins <- discoverPlugins
-  runVogue plugins (runCommand cmd)
+  runVogue plugins (runCommand (optCommand opt) (optSearch opt))
   where
     opts = info (helper <*> optionsParser)
       ( fullDesc
