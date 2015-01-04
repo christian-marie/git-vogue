@@ -81,7 +81,7 @@ Checks if .hs files would have been modified by stylish-haskell. Respects
 Uninstalling 
 ------------
 
-To remove a pre-commit hook configured like this run:
+To remove a `git-vogue init` configured pre-commit hook, run:
 
 ```bash
 rm .git/hooks/pre-commit
