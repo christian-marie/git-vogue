@@ -3,11 +3,10 @@ git-vogue
 
 [![Travis Status](http://travis-ci.org/anchor/git-vogue.png)](https://travis-ci.org/anchor/git-vogue)
 
-*git-vogue* encourages developers to keep their Haskell code ["in vogue"][1]
-by providing a framework for code quality checks that support .
-
-*git-vogue* is intended to be used as a git pre-commit hook, and can be
-installed as such in one command.
+*git-vogue* encourages developers to keep their Haskell code ["in vogue"][1] by
+providing a framework for code quality checking plugins and some supporting
+plugins. Intended to be used as a git pre-commit hook, *git-vogue* can be set
+up as such with one command.
 
 Currently, *git-vogue* ships with the following plugins:
 
