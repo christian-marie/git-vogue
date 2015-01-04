@@ -6,6 +6,7 @@ import           Control.Monad
 import           Data.List.Split
 import           Data.Maybe
 import           Data.String
+import           Data.Traversable
 import           Options.Applicative
 import           Options.Applicative.Types
 import           System.Directory
@@ -56,22 +57,21 @@ discoverPlugins = do
     -- the search path.
     path <- fromMaybe "" <$> lookupEnv "GIT_VOGUE_PATH"
     libexec <- (</> "git-vogue") <$> Paths.getLibexecDir
-    let directories = splitOn ":" path ++ [libexec]
+    let directories = splitOn ":" path <> [libexec]
 
     -- Find all executables in the directories in path.
-    liftM (map fromString)
-        (mapM ls directories >>= concatM >>= filterM isExecutable)
+    (fmap . fmap) fromString
+                  (traverse ls directories >>= filterM isExecutable . concat)
   where
     ls :: FilePath -> IO [FilePath]
     ls p = do
         exists <- doesDirectoryExist p
         if exists
-            then map (p </>) <$> getDirectoryContents p
+            then fmap (p </>) <$> getDirectoryContents p
             else return []
+
     isExecutable :: FilePath -> IO Bool
-    isExecutable p = executable <$> getPermissions p
-    concatM :: Monad m => [[a]] -> m [a]
-    concatM = return . concat
+    isExecutable = fmap executable . getPermissions
 
 -- | Parse the command line and run the command.
 main :: IO ()

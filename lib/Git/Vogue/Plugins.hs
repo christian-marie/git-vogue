@@ -63,9 +63,9 @@ ioPluginExecutorImpl =
 
 colorize :: Status a -> Text
 colorize (Success     (PluginName x) y) =
-    format ("\x1b[32m" % text % " succeeded \x1b[0m with:\n" % text) x y
+    format ("\x1b[32m" % text % " succeeded\x1b[0m with:\n" % text) x y
 colorize (Failure     (PluginName x) y) =
-    format ("\x1b[33m" % text % " failed \x1b[0m with:\n" % text) x y
+    format ("\x1b[33m" % text % " failed\x1b[0m with:\n" % text) x y
 colorize (Catastrophe n (PluginName x) y) =
     format ("\x1b[31m"
            % text
