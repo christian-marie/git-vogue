@@ -8,6 +8,7 @@ import           Data.Maybe
 import           Data.Monoid
 import           Data.Traversable
 import           Language.Haskell.GhcMod
+import           Prelude                 hiding (elem)
 import           System.Exit
 
 main :: IO ()
@@ -28,9 +29,12 @@ ghcModCheck = do
     -- HLint.hs is weird and more of a config file than a source file, so
     -- ghc-mod doesn't like it.
     --
+    -- Setup.hs can import cabal things magically, without requiring it to be
+    -- mentioned in cabal (which ghc-mod hates)
+    --
     -- This is ugly, and should be replaced in favor of a git-vogue ignoring
     -- mechanism.
-    files <- filter (/= "HLint.hs") <$> hsFiles
+    files <- filter (not . (`elem` ["HLint.hs", "Setup.hs"])) <$> hsFiles
 
     -- We can't actually check all at once, or ghc-mod gets confused, so we
     -- traverse

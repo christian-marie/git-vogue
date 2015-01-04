@@ -13,6 +13,7 @@ import           Data.Traversable
 import           Language.Haskell.Exts.SrcLoc
 import           Language.Haskell.HLint3
 import           Language.Preprocessor.Cpphs
+import           System.Directory
 import           System.Exit
 
 #ifndef GPL_SCARES_ME
@@ -64,8 +65,10 @@ lint = do
 -- in the current directory. So we define our own.
 autoSettings' :: IO (ParseFlags, [Classify], Hint)
 autoSettings' = do
+    local_hlint <- doesFileExist "HLint.hs"
+    let start_at = if local_hlint then Just "HLint" else Nothing
     (fixities, classify, hints) <- findSettings (readSettingsFile Nothing)
-                                                (Just "HLint")
+                                                start_at
     return (parseFlagsAddFixities fixities defaultParseFlags, classify, resolveHints hints)
 
 #ifdef GPL_SCARES_ME
