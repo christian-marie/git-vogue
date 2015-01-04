@@ -65,7 +65,7 @@ stylishCheckFile cfg fp = stylishFile fp cfg (\original stylish ->
     case getStyleDiffs original stylish of
         [] -> return True
         x  -> do
-            putStrLn $ "\x1b[35m" <> fp <> "\x1b[0m"
+            putStrLn $ "\x1b[33m" <> fp <> "\x1b[0m"
                     <> " has differing style:\n" <> ppDiff x
             return False
     )
