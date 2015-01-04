@@ -45,6 +45,9 @@ commandParser = subparser
     <> pCommand "verify"
                 CmdVerify
                 "Check git-vogue support is all legit"
+    <> pCommand "plugins"
+                CmdPlugins
+                "List installed plugins."
     <> pCommand "check"
                 CmdRunCheck
                 "Run check plugins on files in a git repo"

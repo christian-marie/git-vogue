@@ -49,7 +49,7 @@ data VogueCommand
     -- | Verify that support is installed and plugins happen.
     | CmdVerify
     -- | List the plugins that git-vogue knows about.
-    | CmdList
+    | CmdPlugins
     -- | Run check plugins on files in a git repository.
     | CmdRunCheck
     -- | Run fix plugins on files in a git repository.
@@ -78,7 +78,7 @@ runCommand
     -> Vogue m ()
 runCommand CmdInit{..} _ = runWithRepoPath (gitAddHook templatePath)
 runCommand CmdVerify   _ = runWithRepoPath (gitCheckHook runsVogue)
-runCommand CmdList     _ = gitListHook
+runCommand CmdPlugins  _ = listPlugins
 runCommand CmdRunCheck search = runCheck search
 runCommand CmdRunFix   search = runFix search
 
@@ -182,8 +182,8 @@ runsVogue path = do
     return $ preCommitCommand `isInfixOf` c
 
 -- | Print a list of all plugins.
-gitListHook :: MonadIO m => Vogue m ()
-gitListHook = do
+listPlugins :: MonadIO m => Vogue m ()
+listPlugins = do
   plugins <- ask
   liftIO .  putStrLn
          $  "git-vogue knows about the following plugins: "
