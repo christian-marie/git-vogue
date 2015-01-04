@@ -4,7 +4,7 @@ git-vogue - A framework for pre-commit checks
 [![Travis Status](http://travis-ci.org/anchor/git-vogue.png)](https://travis-ci.org/anchor/git-vogue)
 
 Intended to be used as a git pre-commit hook, *git-vogue* encourages developers
-to keep their Haskell code ["in vogue"][1] by providing a framework for code
+to keep their Haskell code ["en vogue"][1] by providing a framework for code
 quality checking plugins and some supporting plugins.
 
 Currently, *git-vogue* ships with the following plugins:
