@@ -11,7 +11,7 @@ Currently, *git-vogue* ships with the following plugins:
 
 * [cabal][6]
 * [hlint][2]
-* [stylish-haskell][4] + automatic fixing
+* [stylish-haskell][4] with automatic fixing
 * [ghc-mod][5]
 
 [1]: https://www.youtube.com/watch?v=GuJQSAiODqI
