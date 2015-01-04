@@ -43,6 +43,42 @@ You can attempt to automatically rectify any problems discovered via `git vogue
 fix` and `git vogue fix --all`. The only plugin that currently supports this
 auto-fixing is stylish haskell.
 
+# Plugin discovery/disabling
+
+Running `git-vogue plugins` will show you the libexec directory in which
+git-vogue will discover plugins.
+
+Should one or more plugins annoy you, you may disable it by setting it
+non-executable:
+
+```bash
+chmod -x .cabal/libexec/git-vogue/git-vogue-stylish
+```
+
+A more sophisticated interface to plugin manipulation is planned.
+
+# Plugins
+
+## cabal
+
+Checks your .cabal file for packaging problems. Can not fix problems
+automatically.
+
+## hlint
+
+Checks .hs files for linting issues, respects HLint.hs in the top level of the
+repository. Can not fix problems automatically.
+
+## ghc-mod
+
+Checks .hs files (excluding HLint.hs and Setup.hs) as per ghc-mod check.
+ghc-mod can be tempremental, so if this fails to run the plugin will allow the
+commit to pass. Can not fix problems automatically.
+
+## stylish haskell
+
+Checks if .hs files would have been modified by stylish-haskell. Respects
+.stylish-haskell.yaml. Fixes problems automatically.
 
 Uninstalling 
 ------------
@@ -57,19 +93,6 @@ rm .git/hooks/pre-commit
 uninstalling a cabal package.
 
 
-# Plugin discovery/disabling
-
-Running `git-vogue plugins` will show you the libexec directory in which
-git-vogue will discover plugins.
-
-Should one or more plugins annoy you, you may disable it by setting it
-non-executable:
-
-```bash
-chmod -x .cabal/libexec/git-vogue/git-vogue-stylish
-```
-
-A more sophisticated interface to plugin manipulation is planned.
 
 Philosophy
 ---------
