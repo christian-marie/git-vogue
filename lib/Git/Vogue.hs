@@ -27,6 +27,7 @@ import           Data.String.Utils
 import           System.Directory
 import           System.Exit
 import           System.FilePath
+import           System.IO
 import           System.Posix.Files
 import           System.Process
 
@@ -42,12 +43,13 @@ data VogueCommand
     | CmdVerify
     -- | List the plugins that git-vogue knows about.
     | CmdList
-    -- | Run check plugins on a git repository.
+    -- | Run check plugins on changed files in a git repository.
     | CmdRunCheckChanged
-    -- | Run check plugins on a git repository.
+    -- | Run check plugins on all files in a git repository.
     | CmdRunCheckAll
-    -- | Run fix plugins on a git repository.
+    -- | Run fix plugins on changed files in a git repository.
     | CmdRunFixChanged
+    -- | Run fix plugins on all files in a git repository.
     | CmdRunFixAll
   deriving (Eq, Show)
 
@@ -71,13 +73,12 @@ runCommand
     => VogueCommand
     -> Vogue m ()
 runCommand CmdInit{..}        = runWithRepoPath (gitAddHook templatePath)
-runCommand CmdVerify          = error "Not implemented: verify"
+runCommand CmdVerify          = runWithRepoPath (gitCheckHook runsVogue)
 runCommand CmdList            = gitListHook
 runCommand CmdRunCheckChanged = runCheck FindChanged
 runCommand CmdRunCheckAll     = runCheck FindAll
 runCommand CmdRunFixChanged   = runFix FindChanged
 runCommand CmdRunFixAll       = runFix FindAll
-
 
 -- | Try to fix the broken things. We first do one pass to check what's broken,
 -- then only run fix on those.
@@ -137,7 +138,6 @@ gitAddHook template path = liftIO $ do
             exitFailure
         putStrLn "Your commit hook is already in place."
 
-
 -- | Copy the template pre-commit hook to a git repo.
 copyHookTemplateTo
     :: Maybe FilePath
@@ -149,6 +149,37 @@ copyHookTemplateTo maybe_t hook = do
     perm <- getPermissions hook
     setPermissions hook $ perm { executable = True }
 
+-- | Use a predicate to check a git commit hook.
+gitCheckHook
+    :: MonadIO m
+    => (FilePath -> IO Bool)
+    -> FilePath
+    -> Vogue m ()
+gitCheckHook p path = do
+    let hook = path </> ".git" </> "hooks" </> "pre-commit"
+    -- Check it exists (so openFile doesn't explode).
+    exists <- liftIO . fileExist $ hook
+    if exists
+        then checkPredicate hook
+        else failWith $ "Missing file " <> hook
+    liftIO exitSuccess
+  where
+    checkPredicate hook = liftIO $ do
+        pass <- p hook
+        unless pass $ failWith "Invalid configuration."
+    failWith msg = liftIO $ do
+        hPutStrLn stderr msg
+        exitFailure
+
+-- | Check that a script seems to run git vogue.
+runsVogue
+    :: FilePath
+    -> IO Bool
+runsVogue path = do
+    c <- readFile path
+    return $ preCommitCommand `isInfixOf` c
+
+-- | Print a list of all plugins.
 gitListHook :: MonadIO m => Vogue m ()
 gitListHook = do
   plugins <- ask
