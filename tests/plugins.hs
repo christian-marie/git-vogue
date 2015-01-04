@@ -34,15 +34,15 @@ main = hspec $ do
 
         it "fails if one module fails" $ do
             getWorst failingExecutor ["a", "b"]
-              >>= (`shouldBe` Failure mempty "\x1b[33m failed with:\n\x1b[0m\n\x1b[33m failed with:\n\x1b[0m\n")
+              >>= (`shouldBe` Failure mempty "\ESC[33m failed\ESC[0m with:\n\n\ESC[33m failed\ESC[0m with:\n\n")
             getWorst failingExecutor  ["monkey"]
-              >>= (`shouldBe` Failure mempty "\x1b[33m failed with:\n\x1b[0m\n")
+              >>= (`shouldBe` Failure mempty "\ESC[33m failed\ESC[0m with:\n\n")
 
         it "succeeds if all modules succeed" $ do
             getWorst succeedingExecutor ["a", "b"]
-              >>= (`shouldBe` Success mempty "\x1b[32m succeeded with:\n\x1b[0m\n\x1b[32m succeeded with:\n\x1b[0m\n")
+              >>= (`shouldBe` Success mempty "\ESC[32m succeeded\ESC[0m with:\n\n\ESC[32m succeeded\ESC[0m with:\n\n")
             getWorst succeedingExecutor ["monkey"]
-              >>= (`shouldBe` Success mempty "\x1b[32m succeeded with:\n\x1b[0m\n")
+              >>= (`shouldBe` Success mempty "\ESC[32m succeeded\ESC[0m with:\n\n")
 
     describe "IO module executor" $ do
         describe "check" $ do

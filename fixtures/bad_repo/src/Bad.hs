@@ -1,4 +1,5 @@
 module Main where
-import           Orange
+import           System.IO
 
-main = undefined
+main ::   IO ()
+main = hPutStrLn stderr "hi"
