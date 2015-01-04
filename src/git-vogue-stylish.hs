@@ -3,48 +3,49 @@ module Main where
 
 import           Common
 import           Control.Applicative
+import           Control.Monad
 import           Data.Algorithm.Diff
 import           Data.Algorithm.DiffOutput
-import           Data.List
+import           Data.Foldable
+import           Data.List                 hiding (and)
 import           Data.Monoid               hiding (First)
+import           Data.Traversable
 import           Language.Haskell.Stylish
+import           Prelude                   hiding (and)
 import           System.Exit
 import           System.IO                 hiding (hGetContents)
 import           System.IO.Strict          (hGetContents)
 
 main :: IO ()
-main =
-    f =<< getPluginCommand
+main = do
+    cmd <- getPluginCommand
             "Check your Haskell project for stylish-haskell-related problems."
             "git-vogue-stylish - check for stylish-haskell problems"
-  where
-    f CmdName  = putStrLn "stylish"
-    f CmdCheck = run stylishCheckFile succeedIfAll
-    f CmdFix   = run stylishRunFile (const exitSuccess)
-
---------------------------------------------------------------------------------
--- | Run a stylish operation and do something depending on the result
-run
-    :: Show a => (FilePath -> Config -> IO a) -- ^ Runs Stylish and gets a result
-    -> ([a] -> IO b) -- ^ Transforms a list of results into an exit code
-    -> IO b -- ^ Exit code
-run fn op = do
-    files <- filter (isSuffixOf ".hs") . lines <$> getContents
     cfg <- getConfig
-    results <- mapM (`fn` cfg) files
-    op results
+    files <- filter (isSuffixOf ".hs") . lines <$> getContents
+    f files cfg cmd
+  where
+    f _ _ CmdName  = putStrLn "stylish"
+    f files cfg CmdCheck = do
+        rs <- traverse (stylishCheckFile cfg) files
+        if and rs
+            then do
+                putStrLn $ "Checked " <> show (length rs) <> " files"
+                exitSuccess
+            else
+                exitFailure
 
--- | Exit with success if and only if all results are valid
-succeedIfAll
-    :: [Bool] -- ^ List of results
-    -> IO b -- ^ Exit code
-succeedIfAll rs =
-    if and rs
-        then do
-            putStrLn $ "Checked " <> show (length rs) <> " files"
-            exitSuccess
-        else
-            exitFailure
+    f files cfg CmdFix = do
+        -- Fix all of the things first
+        traverse_ (stylishRunFile cfg) files
+        -- Now double check they are fixed
+        rs <- traverse (stylishCheckFile cfg) files
+        if and rs
+            then
+                putStrLn "Style converged"
+            else do
+                putStrLn "Style did not converge, bailing"
+                exitFailure
 
 --------------------------------------------------------------------------------
 -- | Gets the default configuration at `data/stylish-haskell.yaml`.
@@ -57,30 +58,25 @@ getConfig =
 -- Returns TRUE if there's nothing left to change.
 -- Prints results and returns FALSE if there are things left to change.
 stylishCheckFile
-    :: FilePath -- ^ File to run through Stylish
-    -> Config -- ^ Stylish Haskell config
+    :: Config -- ^ Stylish Haskell config
+    -> FilePath -- ^ File to run through Stylish
     -> IO Bool
-stylishCheckFile fp cfg = stylishFile fp cfg (\original stylish ->
+stylishCheckFile cfg fp = stylishFile fp cfg (\original stylish ->
     case getStyleDiffs original stylish of
         [] -> return True
         x  -> do
-            putStrLn $ "Some things need fixing in " ++ fp
+            putStrLn $ fp <> " has differing style: "
             putStrLn $ ppDiff x
             return False
     )
 
 -- | Runs Stylish over a given file. If there are changes, write them.
 stylishRunFile
-    :: FilePath -- ^ File to run through Stylish
-    -> Config -- ^ Stylish Haskell config
+    :: Config -- ^ Stylish Haskell config
+    -> FilePath -- ^ File to run through Stylish
     -> IO ()
-stylishRunFile fp cfg = stylishFile fp cfg (\original stylish ->
-    case getStyleDiffs original stylish of
-        [] -> return ()
-        _  -> do
-            writeFile fp stylish
-            return ()
-    )
+stylishRunFile cfg fp = stylishFile fp cfg $ \original stylish ->
+    unless (null $ getStyleDiffs original stylish) (writeFile fp stylish)
 
 --------------------------------------------------------------------------------
 -- | Get diffs and filter out equivalent ones

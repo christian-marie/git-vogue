@@ -41,7 +41,7 @@ ioPluginExecutorImpl =
     f :: MonadIO m => String -> SearchMode -> Plugin -> m (Status a)
     f arg sm (Plugin path) = liftIO $ do
         name <- getName path
-        fs <- unlines <$> (paths sm >>= filterM doesFileExist . lines)
+        fs <- unlines <$> (lines <$> paths sm >>= filterM doesFileExist)
         (status, out, err) <- readProcessWithExitCode path [arg] fs
         let glommed = fromString $ out <> err
 
@@ -50,7 +50,6 @@ ioPluginExecutorImpl =
             ExitFailure 1 -> Failure name glommed
             ExitFailure n -> Catastrophe n name glommed
 
-    paths :: SearchMode -> IO String
     paths FindChanged = git ["diff", "--cached", "--name-only"]
     paths FindAll     = git ["ls-files"]
 
@@ -92,16 +91,19 @@ outputStatusAndExit status = liftIO $
             T.putStrLn output
             exitWith $ ExitFailure 2
 
-concatMapPlugin
+-- | Run a bunch of plugin actions, mush the statuses together and stick them
+-- all under the header of the worst.
+getWorst
     :: Monad m
     => (Plugin -> m (Status a))
     -> [Plugin]
     -> m (Status a)
-concatMapPlugin f ps = do
+getWorst f ps = do
     rs <- mapM f ps
     return $ insertMax rs (T.unlines $ fmap colorize rs)
 
 insertMax :: [Status a] -> Text -> Status a
+insertMax [] _   = Success mempty "No plugins to run, vacuous success."
 insertMax rs txt =
     case maximum rs of
         Success{} -> Success mempty txt
