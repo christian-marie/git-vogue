@@ -3,65 +3,97 @@ git-vogue
 
 [![Travis Status](http://travis-ci.org/anchor/git-vogue.png)](https://travis-ci.org/anchor/git-vogue)
 
-*git-vogue* assists developers to keep their Haskell code ["in vogue"][1].
+*git-vogue* encourages developers to keep their Haskell code ["in vogue"][1]
+by providing a framework for code quality checks that support .
 
-This package defines a list of commands to check code quality, comments, and formatting continually. *git-vogue* will set up your repository to run all command pairs on commit, giving instant feedback on the quality of code, and helping fix issues more quickly.
+*git-vogue* is intended to be used as a git pre-commit hook, and can be
+installed as such in one command.
 
-Currently, *git-vogue* will support [hlint][2], [hspec][3] and [Stylish Haskell][4].
+Currently, *git-vogue* ships with the following plugins:
+
+* [cabal][6]
+* [hlint][2]
+* [Stylish Haskell][4] + automatic fixing
+* [ghc-mod][5]
+
 
 [1]: https://www.youtube.com/watch?v=GuJQSAiODqI
 [2]: http://hackage.haskell.org/package/hlint
-[3]: https://hackage.haskell.org/package/hspec
 [4]: https://hackage.haskell.org/package/stylish-haskell
+[5]: https://hackage.haskell.org/package/ghc-mod
+[6]: https://hackage.haskell.org/package/Cabal
 
-Installation
+Quickstart
 ------------
-
-*git-vogue* can be found on Hackage (link TBA) and can be installed with Cabal.
 
 ```bash
 cabal install git-vogue
 ```
 
-To apply it to your repository, invoke:
+If you wish to set up pre-commit hooks (recommended):
 
 ```bash
 git vogue init
 ```
 
-This one time command will setup the git hooks and other requirements to latch itself onto your repository. Once installed, *git-vogue*'s functionality is seamlessly integrated into your git workflow, making it an intrinsic part of your development cycle.
+With pre-commit hooks set up, `git vogue check` will be run before every
+commit. If you wish to check the whole repository, run `git vogue check --all`.
 
-Testing
--------
+You can attempt to automatically rectify any problems discovered via `git vogue
+fix` and `git vogue fix --all`. The only plugin that currently supports this
+auto-fixing is stylish haskell.
 
-To run the built-in tests, run
+
+Uninstalling 
+------------
+
+To remove a pre-commit hook configured like this run:
 
 ```bash
-cabal test
+rm .git/hooks/pre-commit
 ```
 
-There are two sets of acceptance tests in the tests directory, that test against different sources of packages. To run them, run the following:
+[Here are instructions](https://www.youtube.com/watch?v=4qXD5l-ZlfA) for
+uninstalling a cabal package.
+
+
+# Plugin discovery/disabling
+
+Running `git-vogue plugins` will show you the libexec directory in which
+git-vogue will discover plugins.
+
+Should one or more plugins annoy you, you may disable it by setting it
+non-executable:
 
 ```bash
-tests/acceptance-tests
-tests/acceptance-tests-2
+chmod -x .cabal/libexec/git-vogue/git-vogue-stylish
 ```
 
-Rationale
+A more sophisticated interface to plugin manipulation is planned.
+
+Philosophy
 ---------
 
-At Anchor Engineering, we've been working with Haskell for some time, and we've encountered some interesting problems along the way. A lot of these problems have to do with *code readiness*: code that is not only ready to run and deploy, but also ready to pass on to other developers so they can maintain and update it.
+At Anchor Engineering, we're pretty un-dogmatic about using one editor or even
+one OS for development. As such, we've found ourselves in need of a common
+benchmark for linting, formatting and code quality checks.
 
-### Formatting
+We wanted a tool that would:
 
-Nobody formats their code quite the same way, making it difficult for developers to pick up each other's code and read or change it. Differences in spaces verses tabs, or how methods are delimited can cause issues with a lack of standardization.
+* Install in one command
+* Require nothing to be learned for a new developer
+* Tell that developer what they need to fix in the code that they modify and
+  that code only.
 
-To make things easier for everyone (including yourself), we've set up *git-vogue* to use **Stylish Haskell** to check if your code conforms to a given format. If it doesn't, your commit will not be allowed to be pushed upstream, and you will instead receive a number of recommeded changes.
+git-vogue aims to satisfy these needs, whilst saving developers from the
+drudgery of installing, configuring and running each of these tools
+independently.
 
-Plugin design
------------------
+Plugin specification
+-------------------
 
-**The interface** for an executable is a single argument, one of:
+**The interface** for an executable (to be called by git-vogue) is a single
+command line argument, one of:
 
 * check
 * fix
@@ -70,20 +102,22 @@ Plugin design
 The plugin can assume that the CWD will be set to the top-level directory of
 the package.
 
-The plugin will receive a list of all files in the current repository that are
-not to be ignored via STDIN when running in "check" or "fix" mode. These file
-paths will be absolute and newline separated.
+The plugin will receive a list of all files in the current repository that may
+be looked at via STDIN when running in "check" or "fix" mode. These file paths
+will be absolute and newline separated. The plugin is expected to filter them
+appropriate to its needs.
 
-**Rules for each plugin**
+**Invariants for well-behaved plugin commands**
 
-* `check` shall not modify any files
-* `check` may have various return values:
-    * No errors - return code 0
-    * Errors need fixing - return code 1
-    * Catastrophic failure to check - return code 2
+* `name` will return a human-readable name one line
+* `check` will not modify any files
+* `check` will exit with a return code of:
+    * No errors - 0
+    * Errors need fixing - 1
+    * Catastrophic failure to check - 2
 * `fix` is idempotent
-* `fix` may have various return values:
-    * The code is now good (changes may or may not have been made) - return code 0
-    * Some errors remain - return code 1
-    * Catastrophic failure to check - return code 2
+* `fix` will exit with a return code of:
+    * The code is now good (changes may or may not have been made) - 0
+    * Some errors remain - 1
+    * Catastrophic failure to check - 2
 * If `fix` returns "success" (return code 0), `check` must no longer fail
