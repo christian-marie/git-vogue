@@ -38,16 +38,16 @@ optionsParser = subparser
                 "Check git-vogue support is all legit"
     <> pCommand "check"
                 CmdRunCheckChanged
-                "Run check plugins on all files in a git repo"
+                "Run check plugins on changed files in a git repo"
     <> pCommand "check-all"
                 CmdRunCheckAll
-                "Run fix plugins on a git repo"
+                "Run check plugins on all files in a git repo"
     <> pCommand "fix"
                 CmdRunFixChanged
-                "Run fix plugins on a git repo"
+                "Run fix plugins on changed files a git repo"
     <> pCommand "fix-all"
                 CmdRunFixAll
-                "Run fix plugins on a git repo"
+                "Run fix plugins on all files in a git repo"
     )
   where
     pInit = CmdInit <$> option (Just <$> readerAsk)
