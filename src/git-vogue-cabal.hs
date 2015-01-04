@@ -1,7 +1,7 @@
 -- | Description: Check with "cabal check".
 module Main where
 
-import           Control.Applicative
+import           Common
 import           Control.Monad                                 (unless, when)
 import           Data.Monoid
 import           Distribution.PackageDescription.Check
@@ -12,45 +12,18 @@ import           Distribution.Simple.Utils                     (defaultPackageDe
                                                                 wrapText)
 import           Distribution.Verbosity                        (Verbosity,
                                                                 silent)
-import           Options.Applicative
 import           System.Exit
 
-data Command
-    -- | Check the project for problems.
-    = CmdCheck
-    -- | Fix problems in the project.
-    | CmdFix
-    -- | Report details.
-    | CmdName
-
-execute
-    :: Command
-    -> IO ()
-execute cmd = case cmd of
-    CmdName  -> putStrLn "cabal"
-    CmdCheck -> do
-        allOk <- check silent
-        unless allOk exitFailure
-    CmdFix   -> exitFailure
-
-optionsParser :: Parser Command
-optionsParser = subparser
-    (  command "name" (info pName mempty)
-    <> command "check" (info pCheck mempty)
-    <> command "fix" (info pFix mempty)
-    )
-  where
-    pName = pure CmdName
-    pCheck = pure CmdCheck
-    pFix = pure CmdFix
-
 main :: IO ()
-main = execParser opts >>= execute
+main = f =<< getPluginCommand
+                "Check your Haskell project for cabal-related problems."
+                "git-vogue-cabal - check for cabal problems"
   where
-    opts = info (helper <*> optionsParser)
-        ( fullDesc
-        <> progDesc "Check your Haskell project for cabal-related problems."
-        <> header "git-vogue-cabal - check for cabal problems" )
+    f CmdName  = putStrLn "cabal"
+    f CmdCheck = do
+        ok <- check silent
+        unless ok exitFailure
+    f CmdFix     = exitFailure
 
 -- | Runs the same thing as cabal check.
 -- See also "Distribution.Client.Check" in cabal-install.
