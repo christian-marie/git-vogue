@@ -1,8 +1,7 @@
--- | Description: Check with "cabal check".
+-- | Description: Check and fix style differences with stylish-haskell
 module Main where
 
 import           Common
-import           Control.Applicative
 import           Control.Monad
 import           Data.Algorithm.Diff
 import           Data.Algorithm.DiffOutput
@@ -22,7 +21,7 @@ main = do
             "Check your Haskell project for stylish-haskell-related problems."
             "git-vogue-stylish - check for stylish-haskell problems"
     cfg <- getConfig
-    files <- filter (isSuffixOf ".hs") . lines <$> getContents
+    files <- hsFiles
     f files cfg cmd
   where
     f _ _ CmdName  = putStrLn "stylish"
@@ -47,12 +46,13 @@ main = do
                 putStrLn "Style did not converge, bailing"
                 exitFailure
 
---------------------------------------------------------------------------------
--- | Gets the default configuration at `data/stylish-haskell.yaml`.
+-- | Try various configuration locations as per stylish-haskell binary
 getConfig
-    :: IO Config -- ^ Stylish Haskell config
+    :: IO Config
 getConfig =
-    defaultConfigFilePath >>= loadConfig (makeVerbose False) . Just
+    -- Don't spew every file checked to stdout
+    let v = makeVerbose False
+    in configFilePath v Nothing >>= loadConfig v
 
 -- | Checks whether running Stylish over a given file produces any differences.
 -- Returns TRUE if there's nothing left to change.
@@ -78,7 +78,6 @@ stylishRunFile
 stylishRunFile cfg fp = stylishFile fp cfg $ \original stylish ->
     unless (null $ getStyleDiffs original stylish) (writeFile fp stylish)
 
---------------------------------------------------------------------------------
 -- | Get diffs and filter out equivalent ones
 getStyleDiffs
     :: String
@@ -95,7 +94,6 @@ filterDiff
 filterDiff (Both a b) = a /= b
 filterDiff _          = True
 
---------------------------------------------------------------------------------
 -- | Takes an original file, the Stylish version of the file, and does something
 -- depending on the outcome of the Stylish transformation.
 stylishFile
