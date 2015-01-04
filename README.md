@@ -1,5 +1,5 @@
-git-vogue
-=========
+git-vogue - A framework for Haskell git pre-commit checks 
+=========================================================
 
 [![Travis Status](http://travis-ci.org/anchor/git-vogue.png)](https://travis-ci.org/anchor/git-vogue)
 
