@@ -56,7 +56,7 @@ check verbosity = do
     unless (null errors) $
         putStrLn "Hackage would reject this package."
     when (null packageChecks) $
-        putStrLn "No errors or warnings could be found in the package."
+        putStrLn "Checked cabal file"
     return (null packageChecks)
   where
     printCheckMessages = mapM_ (putStrLn . format . explanation)

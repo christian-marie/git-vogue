@@ -77,7 +77,7 @@ ghcModCheck = do
     let warns = catMaybes maybe_ws
     if null warns
         then do
-            putStrLn $ "Checked " <> show (length files)  <> " files"
+            putStrLn $ "Checked " <> show (length files)  <> " file(s)"
             exitSuccess
         else do
             traverse_ putStrLn warns

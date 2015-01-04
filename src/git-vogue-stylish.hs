@@ -30,7 +30,7 @@ main = do
         rs <- traverse (stylishCheckFile cfg) files
         if and rs
             then do
-                putStrLn $ "Checked " <> show (length rs) <> " files"
+                putStrLn $ "Checked " <> show (length rs) <> " file(s)"
                 exitSuccess
             else
                 exitFailure

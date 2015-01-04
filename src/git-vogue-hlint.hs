@@ -51,7 +51,7 @@ lint = do
 
     if null ideas && null errors
       then do
-        putStrLn ("checked " <> show (length files) <> " files")
+        putStrLn ("Checked " <> show (length files) <> " file(s)")
         exitSuccess
       else putStrLn out >> exitFailure
   where
