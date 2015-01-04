@@ -3,7 +3,9 @@ module Main where
 
 import           Common
 import           Control.Applicative
+import           Data.Char
 import           Data.Foldable
+import           Data.List               hiding (elem)
 import           Data.Maybe
 import           Data.Monoid
 import           Data.Traversable
@@ -22,6 +24,16 @@ main =
     f CmdFix   = do
         putStrLn "you need to fix ghc-mod check failures"
         exitFailure
+
+-- | Try to help the user out with some munging of error messages
+explain :: String -> String
+explain s
+    -- A terrible heuristic, but it may help some people
+    | "test" `isInfixOf` fmap toLower s && "hidden package" `isInfixOf` s =
+        s <> "\n\tSuggestion: cabal configure --enable-tests\n"
+    | "bench" `isInfixOf` fmap toLower s && "hidden package" `isInfixOf` s =
+        s <> "\n\tSuggestion: cabal configure --enable-benchmarks\n"
+    | otherwise = s
 
 -- | ghc-mod check all of the .hs files from stdin
 ghcModCheck ::  IO ()
@@ -56,7 +68,7 @@ ghcModCheck = do
         case warn_err of
             -- Errors in files
             Left e -> do
-                putStrLn e
+                putStrLn (explain e)
                 return Nothing
             -- Warnings, sometimes empty strings
             Right warn ->
