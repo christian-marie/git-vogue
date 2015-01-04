@@ -64,17 +64,16 @@ ioPluginExecutorImpl =
 
 colorize :: Status a -> Text
 colorize (Success     (PluginName x) y) =
-    format ("\x1b[32m" % text % " succeeded with:\n" % text % "\x1b[0m") x y
+    format ("\x1b[32m" % text % " succeeded \x1b[0m with:\n" % text) x y
 colorize (Failure     (PluginName x) y) =
-    format ("\x1b[33m" % text % " failed with:\n" % text % "\x1b[0m") x y
+    format ("\x1b[33m" % text % " failed \x1b[0m with:\n" % text) x y
 colorize (Catastrophe n (PluginName x) y) =
     format ("\x1b[31m"
            % text
-           % " exploded with exit code "
+           % " exploded \x1b[0m with exit code "
            % int
            %":\n"
-           % text
-           % "\x1b[0m" ) x n y
+           % text) x n y
 
 -- | Output the result of a Plugin and exit with an appropriate return code
 outputStatusAndExit
@@ -100,7 +99,7 @@ concatMapPlugin
     -> m (Status a)
 concatMapPlugin f ps = do
     rs <- mapM f ps
-    return $ insertMax rs (T.unlines $ map colorize rs)
+    return $ insertMax rs (T.unlines $ fmap colorize rs)
 
 insertMax :: [Status a] -> Text -> Status a
 insertMax rs txt =
