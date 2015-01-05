@@ -45,12 +45,21 @@ auto-fixing is stylish-haskell.
 Running `git-vogue plugins` will show you the libexec directory in which
 git-vogue will discover plugins.
 
-Should one or more plugins annoy you, you may disable it by setting it
+Should one or more plugins annoy you, you may disable it globally by setting it
 non-executable:
 
 ```bash
 chmod -x .cabal/libexec/git-vogue/git-vogue-stylish
 ```
+
+Alternatively you can disable plugins on a per-repository, per-user, or
+per-system basis by adding the file name to the `vogue.disable` key in your git
+configuration:
+
+````bash
+git config --local --add vogue.disable git-vogue-a-plugin
+git config --global --add vogue.disable git-vogue-another-plugin
+````
 
 A more sophisticated interface to plugin manipulation is planned.
 

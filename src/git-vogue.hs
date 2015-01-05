@@ -75,8 +75,12 @@ discoverPlugins = do
     let directories = splitOn ":" path <> [libexec]
 
     -- Find all executables in the directories in path.
-    (fmap . fmap) fromString
+    plugins <- (fmap . fmap) fromString
                   (traverse ls directories >>= filterM isExecutable . concat)
+
+    -- Filter out disabled plugins.
+    disabled_plugins <- disabledPlugins
+    return . filter (not . pluginIn disabled_plugins) $ plugins
   where
     ls :: FilePath -> IO [FilePath]
     ls p = do
@@ -87,6 +91,10 @@ discoverPlugins = do
 
     isExecutable :: FilePath -> IO Bool
     isExecutable = fmap executable . getPermissions
+
+    pluginIn :: [String] -> Plugin -> Bool
+    pluginIn disabled_plugins p =
+        (takeBaseName . unPlugin $ p) `elem` disabled_plugins
 
 -- | Parse the command line and run the command.
 main :: IO ()

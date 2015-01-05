@@ -18,6 +18,7 @@
 module Git.Vogue where
 
 import           Control.Applicative
+import           Control.Exception
 import           Control.Monad
 import           Control.Monad.IO.Class
 import           Control.Monad.Reader
@@ -190,3 +191,12 @@ listPlugins = do
     liftIO .  putStr
          $  "git-vogue knows about the following plugins:\n\n"
          <> unlines (fmap (('\t':) . unPlugin) plugins)
+
+-- | Get list of disabled plugins from git configuration.
+disabledPlugins
+    :: (Monad m, Functor m, MonadIO m)
+    => m [String]
+disabledPlugins = lines <$> liftIO (readConfig `catch` none)
+  where
+    readConfig = readProcess "git" ["config", "--get-all", "vogue.disable"] ""
+    none (SomeException _) = return []
