@@ -2,5 +2,5 @@ language: haskell
 ghc: 7.8
 before_install:
   - cabal update
-  - cabal install cabal-install
+  - cabal install cabal-install transformers=0.3.0.0
   - cabal install alex happy
