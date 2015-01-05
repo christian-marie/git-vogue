@@ -7,15 +7,30 @@ $(document).ready( function() {
         $('#content ' + hash).addClass('active');
 	};
 
-    smoothScroll.init({
-    	offset: 10,
-    	easing: "easeInOutCubic",
-    	callbackBefore: function (toggle, anchor) {
-    		activate(window.location.hash);
-    	}
+    var makeSmoothScroll = function(){
+        var offset = 25;
+        if (window.innerWidth >= 960) {
+            offset = 35;
+        }
+        console.log(offset);
+
+        smoothScroll.init({
+            offset: offset,
+            easing: "easeInOutCubic",
+            callbackBefore: function (toggle, anchor) {
+                activate(window.location.hash);
+            }
+        });
+    };
+
+    makeSmoothScroll();
+
+    $(window).resize(function(){
+        makeSmoothScroll();        
     });
+    
     if (window.location.hash == "" || window.location.hash == "#") {
-        activate('#title');
+        activate('#content');
     }
     else {
         activate(window.location.hash);
