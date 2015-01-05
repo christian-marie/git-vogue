@@ -1,13 +1,13 @@
 name:                git-vogue
 version:             0.1.0.0
-synopsis:            Make your Haskell git repositories fashionable.
+synopsis:            A framework for pre-commit checks.
 description:         Make your Haskell git repositories fashionable.
 homepage:            https://github.com/anchor/git-vogue
 license:             BSD3
 license-file:        LICENSE
 author:              Anchor Engineering <engineering@anchor.com.au>
 maintainer:          Anchor Engineering <engineering@anchor.com.au>
-copyright:           (c) 2014 Anchor Systems, Pty Ltd and Others
+copyright:           (c) 2015 Anchor Systems, Pty Ltd and Others
 category:            Development
 build-type:          Custom
 extra-source-files:  README.md
@@ -137,4 +137,3 @@ test-suite test-plugins
                      , unix
 
 -- vim: set tabstop=21 expandtab:
-
