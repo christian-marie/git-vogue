@@ -1,0 +1,5 @@
+2015-01-05 v0.1.0.4 Christian Marie <christian@ponies.io>
+	* plugins: Allow disabling of plugins via git config
+
+2015-01-05 v0.1.0.3 Christian Marie <christian@ponies.io>
+	* Initial public release
