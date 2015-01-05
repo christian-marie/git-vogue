@@ -1,5 +1,5 @@
 name:                git-vogue
-version:             0.1.0.1
+version:             0.1.0.2
 synopsis:            A framework for pre-commit checks.
 description:         Make your Haskell git repositories fashionable.
 homepage:            https://github.com/anchor/git-vogue
