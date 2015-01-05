@@ -50,8 +50,9 @@ ioPluginExecutorImpl =
             ExitFailure 1 -> Failure name glommed
             ExitFailure n -> Catastrophe n name glommed
 
-    paths FindChanged = git ["diff", "--cached", "--name-only"]
-    paths FindAll     = git ["ls-files"]
+    paths FindChanged       = git ["diff", "--cached", "--name-only"]
+    paths FindAll           = git ["ls-files"]
+    paths (FindSpecific fs) = return $ unlines fs
 
     git args = readProcess "git" args ""
 
