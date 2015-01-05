@@ -38,7 +38,10 @@ main =
   where
     f CmdName  = putStrLn "hlint"
     f CmdCheck = lint
-    f CmdFix   = putStrLn "you need to fix hlint failures" >> exitFailure
+    f CmdFix   = do
+        putStrLn $ "There are outstanding hlint failures, you need to fix this "
+                <> "manually and then re-run check"
+        exitFailure
 
 -- | Lint all of the .hs files from stdin
 lint ::  IO ()

@@ -32,7 +32,10 @@ main = f =<< getPluginCommand
     f CmdCheck = do
         ok <- check silent
         unless ok exitFailure
-    f CmdFix     = exitFailure
+    f CmdFix     = do
+        putStrLn $ "There are outstanding cabal failures, you need to fix this "
+                <> "manually and then re-run check"
+        exitFailure
 
 -- | Runs the same thing as cabal check.
 -- See also "Distribution.Client.Check" in cabal-install.

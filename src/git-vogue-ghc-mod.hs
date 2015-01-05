@@ -31,7 +31,8 @@ main =
     f CmdName  = putStrLn "ghc-mod check"
     f CmdCheck = ghcModCheck
     f CmdFix   = do
-        putStrLn "you need to fix ghc-mod check failures"
+        putStrLn $ "There are outstanding ghc-mod failures, you need to fix this "
+                <> "manually and then re-run check"
         exitFailure
 
 -- | Try to help the user out with some munging of error messages
