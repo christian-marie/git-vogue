@@ -1,6 +1,4 @@
 language: haskell
 ghc: 7.8
 before_install:
-  - cabal update
-  - cabal install cabal-install
-  - cabal install alex happy
+  - sudo apt-get install -y alex happy
