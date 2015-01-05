@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-        <title>git-vogue</title>
+        <title>git-vogue - a pre-commit check framework</title>
         <link href="http://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet" type="text/css" />
         <link href="http://fonts.googleapis.com/css?family=Inconsolata:400,700" rel="stylesheet" type="text/css" />
         <link rel="stylesheet" type="text/css" href="./css/default.css" />
@@ -15,74 +15,96 @@
         <header data-scroll-header>
             <div id="navigation">
                 <a data-scroll href="#title">Top</a>
-                <a data-scroll href="#installation">Installation</a>
-                <a data-scroll href="#rationale">Rationale</a>
-                <a data-scroll href="#plugin-design">Plugin Design</a>
-                <a data-scroll href="#developing-a-plugin">Developing a Plugin</a>
+                <a data-scroll href="#quickstart">Quickstart</a>
+                <a data-scroll href="#plugin-discoverydisabling">Discovery</a>
+                <a data-scroll href="#plugins">Plugins</a>
+                <a data-scroll href="#uninstalling">Uninstall</a>
+                <a data-scroll href="#philosophy">Philosophy</a>
+                <a data-scroll href="#plugin-specification">Plugin Specs</a>
                 <a href="https://www.anchor.com.au">Anchor</a>
                 <a href="https://github.com/anchor/git-vogue">Github</a>
             </div>
         </header>
 
         <section id="content">
-            <h1 id="title">git-vogue</h1>
+            <h1 id="title">git-vogue - a pre-commit check framework</h1>
 
-            <p><a href="https://travis-ci.org/anchor/git-vogue"><img src="http://travis-ci.org/anchor/git-vogue.png" alt="Travis Status" /></a></p>
-<p><em>git-vogue</em> assists developers to keep their Haskell code <a href="https://www.youtube.com/watch?v=GuJQSAiODqI">“in vogue”</a>.</p>
-<p>This package defines a list of commands to check code quality, comments, and formatting continually. <em>git-vogue</em> will set up your repository to run all command pairs on commit, giving instant feedback on the quality of code, and helping fix issues more quickly.</p>
-<p>Currently, <em>git-vogue</em> will support <a href="http://hackage.haskell.org/package/hlint">hlint</a>, <a href="https://hackage.haskell.org/package/hspec">hspec</a>, <a href="https://hackage.haskell.org/package/stylish-haskell">Stylish Haskell</a> and <a href="https://www.haskell.org/haddock/">Haddock</a>.</p>
-<h2 id="installation">Installation</h2>
-<p>See instructions here:</p>
-<p><a href="https://github.com/anchor/git-vogue">git-vogue Github page</a></p>
-<h2 id="rationale">Rationale</h2>
-<p>At <em>Anchor Engineering</em>, we’ve been working with Haskell for some time, and we’ve encountered some interesting problems along the way. A lot of these problems have to do with <em>code readiness</em>: code that is not only ready to run and deploy, but also ready to pass on to other developers so they can maintain and update it.</p>
-<h3 id="formatting">Formatting</h3>
-<p>Nobody formats their code quite the same way, making it difficult for developers to pick up each other’s code and read or change it. Differences in spaces verses tabs, or how methods are delimited can cause issues with a lack of standardization.</p>
-<p>To make things easier for everyone (including yourself), we’ve set up <em>git-vogue</em> to use <strong>Stylish Haskell</strong> to check if your code conforms to a given format. If it doesn’t, your commit will not be allowed to be pushed upstream, and you will instead receive a number of recommeded changes.</p>
-<h3 id="linting">Linting</h3>
-<p>Sometimes there are nicer ways to write your code than the way you’re aware of. Linting can optimise your code and show you better ways to work with it. We’ve set up <em>git-vogue</em> to use <em>hlint</em>, which runs across your Haskell files and recommends changes to them to make them a bit nicer.</p>
-<h3 id="testing">Testing</h3>
-<p>Integration of <em>git-vogue</em> with hspec means that as long as your tests are defined as hspec-compatible, your tests will always run, making sure that you’re committing compileable, correct code.</p>
-<h3 id="documentation">Documentation</h3>
-<p>Don’t you hate it when code isn’t documented well, especially your own? <em>git-vogue</em>’s Haddock checks make sure that your modules and methods are appropriately covered for documentation, and encourages you to do that little bit extra to make sure that anyone can use your work.</p>
-<h2 id="plugin-design">Plugin design</h2>
-<p><strong>The interface</strong> for an executable is a single argument, one of:</p>
+            <p>Intended to be used as a git pre-commit hook, <em>git-vogue</em> encourages developers to keep their Haskell code <a href="https://www.youtube.com/watch?v=GuJQSAiODqI">“en vogue”</a> by providing a framework for checking code quality and some supporting plugins.</p>
+<p>Currently, <em>git-vogue</em> ships with the following plugins:</p>
+<ul>
+<li><a href="https://hackage.haskell.org/package/Cabal">cabal</a></li>
+<li><a href="http://hackage.haskell.org/package/hlint">hlint</a></li>
+<li><a href="https://hackage.haskell.org/package/stylish-haskell">stylish-haskell</a> with automatic fixing</li>
+<li><a href="https://hackage.haskell.org/package/ghc-mod">ghc-mod</a></li>
+</ul>
+<h2 id="quickstart">Quickstart</h2>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">cabal</span> install git-vogue</code></pre>
+<p>If you wish to set up pre-commit hooks (recommended):</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">git</span> vogue init</code></pre>
+<p>With pre-commit hooks set up, <code>git vogue check</code> will be run before every commit. If you wish to check the whole repository, run <code>git vogue check --all</code>.</p>
+<p>You can attempt to automatically rectify any problems discovered via <code>git vogue fix</code> and <code>git vogue fix --all</code>. The only plugin that currently supports this auto-fixing is stylish-haskell.</p>
+<h2 id="plugin-discoverydisabling">Plugin discovery/disabling</h2>
+<p>Running <code>git-vogue plugins</code> will show you the libexec directory in which git-vogue will discover plugins.</p>
+<p>Should one or more plugins annoy you, you may disable it by setting it non-executable:</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">chmod</span> -x .cabal/libexec/git-vogue/git-vogue-stylish</code></pre>
+<p>A more sophisticated interface to plugin manipulation is planned.</p>
+<h2 id="plugins">Plugins</h2>
+<h3 id="cabal">cabal</h3>
+<p>Checks your .cabal file for packaging problems. Can not fix problems automatically.</p>
+<h3 id="hlint">hlint</h3>
+<p>Checks .hs files for linting issues, respects <code>HLint.hs</code> in the top level of the repository. Can not fix problems automatically.</p>
+<h3 id="ghc-mod">ghc-mod</h3>
+<p>Checks .hs files (excluding <code>HLint.hs</code> and <code>Setup.hs</code>) as per ghc-mod check. ghc-mod can be temperamental, so if this fails to run the plugin will allow the commit to pass. Can not fix problems automatically.</p>
+<h3 id="stylish-haskell">stylish-haskell</h3>
+<p>Checks if .hs files would have been modified by stylish-haskell. Respects <code>.stylish-haskell.yaml</code>. Can fix problems automatically.</p>
+<h2 id="uninstalling">Uninstalling</h2>
+<p>To remove a <code>git-vogue init</code> configured pre-commit hook, run:</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">rm</span> .git/hooks/pre-commit</code></pre>
+<p><a href="https://www.youtube.com/watch?v=4qXD5l-ZlfA">Here are instructions</a> for uninstalling a cabal package.</p>
+<h2 id="philosophy">Philosophy</h2>
+<p>At Anchor Engineering, we’re pretty un-dogmatic about using one editor or even one OS for development. As such, we’ve found ourselves in need of a common benchmark for linting, formatting and code quality checks.</p>
+<p>We wanted a tool that would:</p>
+<ul>
+<li>Install in one command</li>
+<li>Require nothing to be learned for a new developer</li>
+<li>Tell that developer what they need to fix in the code that they modify and that code only.</li>
+</ul>
+<p>git-vogue aims to satisfy these needs, whilst saving developers from the drudgery of installing, configuring and running each of these tools independently.</p>
+<h2 id="plugin-specification">Plugin specification</h2>
+<p><strong>The interface</strong> for an executable (to be called by git-vogue) is a single command line argument, one of:</p>
 <ul>
 <li>check</li>
 <li>fix</li>
 <li>name</li>
 </ul>
 <p>The plugin can assume that the CWD will be set to the top-level directory of the package.</p>
-<p>The plugin will receive a list of all files in the current repository that are not to be ignored via STDIN when running in “check” or “fix” mode. These file paths will be absolute and newline separated.</p>
-<h3 id="rules-for-each-plugin">Rules for each plugin</h3>
+<p>The plugin will receive a list of all files in the current repository that may be looked at via STDIN when running in “check” or “fix” mode. These file paths will be absolute and newline separated. The plugin is expected to filter them appropriate to its needs.</p>
+<h3 id="invariants-for-well-behaved-plugin-commands">Invariants for well-behaved plugin commands</h3>
 <ul>
-<li><code>check</code> shall not modify any files</li>
-<li><code>check</code> may have various return values:
+<li><code>name</code> will return a human-readable name one line</li>
+<li><code>check</code> will not modify any files</li>
+<li><code>check</code> will exit with a return code of:
 <ul>
-<li>No errors - return code 0</li>
-<li>Errors need fixing - return code 1</li>
-<li>Catastrophic failure to check - return code 2</li>
+<li>No errors - 0</li>
+<li>Errors need fixing - 1</li>
+<li>Catastrophic failure to check - 2</li>
 </ul></li>
 <li><code>fix</code> is idempotent</li>
-<li><code>fix</code> may have various return values:
+<li><code>fix</code> will exit with a return code of:
 <ul>
-<li>The code is now good (changes may or may not have been made) - return code 0</li>
-<li>Some errors remain - return code 1</li>
-<li>Catastrophic failure to check - return code 2</li>
+<li>The code is now good (changes may or may not have been made) - 0</li>
+<li>Some errors remain - 1</li>
+<li>Catastrophic failure to check - 2</li>
 </ul></li>
 <li>If <code>fix</code> returns “success” (return code 0), <code>check</code> must no longer fail</li>
 </ul>
-<h2 id="developing-a-plugin">Developing a plugin</h2>
-<p><em>Anchor</em> has developed all its <em>git-vogue</em> plugins in Haskell, but you can implement them in any language that works with your POSIX-compatible environment. Even <strong>bash</strong> is suitable for writing your <em>git-vogue</em> plugins.</p>
-<p>Simply write your plugin to discover all the files you want to <code>check</code> and/or <code>fix</code>, perform the necessary operations on them to do so, and return the result as per the rules list above.</p>
-<p>Future versions of <em>git-vogue</em> will support limiting checking and fixing to certain sets of files only. An example of this might be checking and fixing code in <code>lib</code> directories, but not <code>test</code> scaffold directories. Please keep this in mind when developing your plugin, and be sure to isolate your file listing method appropriately.</p>
         </section>
 
         <footer>
             <p class="info">
                 © <a href="https://www.anchor.com.au">Anchor</a> 2015.
                 <br />
-                <a href="https://github.com/Keyamoon/IcoMoon-Free">Icons by IcoMoon</a> <a href="http://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+                Icons by <a href="https://github.com/Keyamoon/IcoMoon-Free">IcoMoon</a> (<a href="http://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>) and <a href="https://github.com/github/octicons">Github</a> (<a href="http://choosealicense.com/licenses/mit/">MIT</a>)
             </p>
             <a class="top-marker" data-scroll href="#title">Top</a>
         </footer>

@@ -1,7 +1,7 @@
 $(document).ready( function() {
 	var activate = function(hash){
 		$('#navigation a.active').removeClass('active');
-        $('#navigation a[href="' + window.location.hash + '"]').addClass('active');
+        $('#navigation a[href="' + hash + '"]').addClass('active');
 
         $('#content .active').removeClass('active');
         $('#content ' + hash).addClass('active');
