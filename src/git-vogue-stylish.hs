@@ -10,7 +10,6 @@
 -- | Description: Check and fix style differences with stylish-haskell
 module Main where
 
-import           Common
 import           Control.Monad
 import           Data.Algorithm.Diff
 import           Data.Algorithm.DiffOutput
@@ -18,6 +17,7 @@ import           Data.Foldable
 import           Data.List                 hiding (and)
 import           Data.Monoid               hiding (First)
 import           Data.Traversable
+import           Git.Vogue.PluginCommon
 import           Language.Haskell.Stylish
 import           Prelude                   hiding (and)
 import           System.Exit

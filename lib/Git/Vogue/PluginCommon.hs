@@ -8,7 +8,7 @@
 --
 
 -- | Common helpers for git vogue plugins
-module Common
+module Git.Vogue.PluginCommon
 (
     hsFiles,
     getPluginCommand,

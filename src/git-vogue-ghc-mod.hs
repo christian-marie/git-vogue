@@ -10,7 +10,6 @@
 -- | Description: Check with "cabal check".
 module Main where
 
-import           Common
 import           Control.Applicative
 import           Data.Char
 import           Data.Foldable
@@ -18,6 +17,7 @@ import           Data.List               hiding (elem)
 import           Data.Maybe
 import           Data.Monoid
 import           Data.Traversable
+import           Git.Vogue.PluginCommon
 import           Language.Haskell.GhcMod
 import           Prelude                 hiding (elem)
 import           System.Exit

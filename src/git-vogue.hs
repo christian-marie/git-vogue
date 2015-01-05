@@ -25,7 +25,7 @@ import           System.FilePath
 import           Git.Vogue
 import           Git.Vogue.Types
 
-import           Common
+import           Git.Vogue.PluginCommon
 import qualified Paths_git_vogue           as Paths
 
 -- | Parse command-line options.

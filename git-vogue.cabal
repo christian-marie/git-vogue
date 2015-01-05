@@ -28,6 +28,7 @@ library
   exposed-modules:     Git.Vogue
                        Git.Vogue.Types
                        Git.Vogue.Plugins
+                       Git.Vogue.PluginCommon
   other-modules:       Paths_git_vogue
   build-depends:       base >=4.7 && <4.8
                      , MissingH
@@ -37,6 +38,7 @@ library
                      , formatting
                      , split
                      , text
+                     , optparse-applicative >= 0.11
                      , transformers
                      , mtl
                      , unix
@@ -53,7 +55,7 @@ executable git-vogue
                      , filepath
                      , directory
                      , git-vogue
-                     , optparse-applicative >= 0.11
+                     , optparse-applicative
                      , split
 
 executable git-vogue-cabal
@@ -62,7 +64,7 @@ executable git-vogue-cabal
   main-is:             git-vogue-cabal.hs
   build-depends:       base >=4.7 && <4.8
                      , Cabal
-                     , optparse-applicative >= 0.11
+                     , git-vogue
                      , process
 
 executable git-vogue-hlint
@@ -76,7 +78,7 @@ executable git-vogue-hlint
                      , cpphs
                      , bifunctors
                      , haskell-src-exts
-                     , optparse-applicative >= 0.11
+                     , git-vogue
                      , hscolour
                      , process
   if !flag(gpl)
@@ -90,7 +92,7 @@ executable git-vogue-stylish
                      , Diff
                      , directory
                      , filepath
-                     , optparse-applicative >= 0.11
+                     , git-vogue
                      , process
                      , strict
                      , stylish-haskell
@@ -103,7 +105,7 @@ executable git-vogue-ghc-mod
                      , Diff
                      , directory
                      , filepath
-                     , optparse-applicative >= 0.11
+                     , git-vogue
                      , process
                      , strict
                      , ghc-mod

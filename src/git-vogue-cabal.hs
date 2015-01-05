@@ -10,7 +10,6 @@
 -- | Description: Check with "cabal check".
 module Main where
 
-import           Common
 import           Control.Monad                                 (unless, when)
 import           Data.Monoid
 import           Distribution.PackageDescription.Check
@@ -21,6 +20,7 @@ import           Distribution.Simple.Utils                     (defaultPackageDe
                                                                 wrapText)
 import           Distribution.Verbosity                        (Verbosity,
                                                                 silent)
+import           Git.Vogue.PluginCommon
 import           System.Exit
 
 main :: IO ()

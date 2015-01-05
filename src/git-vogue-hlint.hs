@@ -13,12 +13,12 @@
 -- | Description: Check with "cabal check".
 module Main where
 
-import           Common
 import           Control.Applicative
 import           Data.Bifunctor
 import           Data.List
 import           Data.Monoid
 import           Data.Traversable
+import           Git.Vogue.PluginCommon
 import           Language.Haskell.Exts.SrcLoc
 import           Language.Haskell.HLint3
 import           Language.Preprocessor.Cpphs
