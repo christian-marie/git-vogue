@@ -185,6 +185,6 @@ runsVogue path = do
 listPlugins :: MonadIO m => Vogue m ()
 listPlugins = do
   plugins <- ask
-  liftIO .  putStrLn
-         $  "git-vogue knows about the following plugins: "
-         <> show plugins
+  liftIO .  putStr
+         $  "git-vogue knows about the following plugins:\n\n"
+         <> unlines (fmap (('\t':) . unPlugin) plugins)
