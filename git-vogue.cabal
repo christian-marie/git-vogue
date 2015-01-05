@@ -41,9 +41,9 @@ library
                      , mtl
                      , unix
                        -- To fix depedencies
-                     , hlint           >= 1.9    && < 1.10
+                     , hlint           >= 1.9.13 && < 1.10
                      , stylish-haskell >= 0.5.11 && < 0.5.12
-                     , ghc-mod         >= 5.2  && < 5.3
+                     , ghc-mod         >= 5.2    && < 5.3
 
 executable git-vogue
   default-language:    Haskell2010
