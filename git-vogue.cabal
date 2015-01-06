@@ -27,7 +27,8 @@ library
   hs-source-dirs:      lib
   exposed-modules:     Git.Vogue
                        Git.Vogue.Types
-                       Git.Vogue.Plugins
+                       Git.Vogue.VCS.Git
+                       Git.Vogue.PluginDiscoverer.Libexec
                        Git.Vogue.PluginCommon
   other-modules:       Paths_git_vogue
   build-depends:       base >=4.7 && <4.8

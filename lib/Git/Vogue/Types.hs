@@ -16,24 +16,48 @@ import           Data.Monoid
 import           Data.String
 import           Data.Text.Lazy (Text)
 
+-- | Options parsed from the command-line.
+data VogueOptions = Options
+    { optSearch  :: SearchMode
+    , optCommand :: VogueCommand
+    }
+  deriving (Eq, Show)
+
+-- | Commands, with parameters, to be executed.
+data VogueCommand
+    -- | Add git-vogue support to a git repository.
+    = CmdInit 
+    -- | Verify that support is installed and plugins happen.
+    | CmdVerify
+    -- | List the plugins that git-vogue knows about.
+    | CmdPlugins
+    -- | Run check plugins on files in a git repository.
+    | CmdRunCheck
+    -- | Run fix plugins on files in a git repository.
+    | CmdRunFix
+  deriving (Eq, Show)
+
+
 -- | Phantom type for Statuses related to checking
 data Check
 -- | Phantom type for Statuses related to fixing
 data Fix
 
 -- | Result of running a Plugin
-data Status a
-    = Success PluginName Text
-    | Failure PluginName Text
-    | Catastrophe Int PluginName Text
+data Result 
+    = Success Text
+    | Failure Text
+    | Catastrophe Int Text
   deriving (Show, Ord, Eq)
 
--- | Absolute path to an executable
-newtype Plugin = Plugin {
-    unPlugin :: FilePath
-} deriving (Show, Ord, Eq, IsString)
+-- | A plugin that can be told to check or fix a list of files
+data Plugin m = Plugin
+    { pluginName :: Text
+    , enabled    :: Bool
+    , runCheck   :: [FilePath] -> m Result
+    , runFix     :: [FilePath] -> m Result
+    }
 
--- | Nice, human readable name of a plugin
 newtype PluginName = PluginName {
     unPluginName :: Text
 } deriving (Show, Ord, Eq, IsString, Monoid)
@@ -43,8 +67,19 @@ newtype PluginName = PluginName {
 data SearchMode = FindAll | FindChanged
   deriving (Eq, Show)
 
--- | An implementation of a "runner" of plugins. Mostly for easy testing.
-data PluginExecutorImpl m = PluginExecutorImpl{
-    executeFix   :: SearchMode -> Plugin -> m (Status Fix),
-    executeCheck :: SearchMode -> Plugin -> m (Status Check)
-}
+-- | A thing that can find plugins, for example we might search through the
+-- libexec directory for executables.
+data PluginDiscoverer m = PluginDiscoverer
+    { discoverPlugins :: m [Plugin m]
+    , disablePlugin   :: PluginName -> m [Plugin m]
+    , enablePlugin    :: PluginName -> m ()
+    }
+
+-- | A VCS backend, such as git.
+data VCS m = VCS
+    { getFiles     :: SearchMode -> m [FilePath] -- ^ Find all staged files
+    , installHook  :: m ()                       -- ^ Install pre-commit hook
+    , removeHook   :: m ()                       -- ^ Remove pre-commit hook
+    , checkHook    :: m Bool                     -- ^ Check pre-commit hook
+    , findTopLevel :: m FilePath                 -- ^ Find the / of the repo
+    }
