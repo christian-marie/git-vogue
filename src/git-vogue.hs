@@ -30,13 +30,18 @@ import qualified Paths_git_vogue           as Paths
 
 -- | Parse command-line options.
 optionsParser :: Parser VogueOptions
-optionsParser = Options
-    <$> flag FindChanged FindAll
+optionsParser = flip Options
+    <$> commandParser
+    <*> searchP
+  where
+    searchP :: Parser SearchMode
+    searchP = fileList <|> allFlag
+    fileList = FindSpecific <$> some (argument str (metavar "FILE"))
+    allFlag = flag FindChanged FindAll
         (  long "all"
         <> short 'A'
         <> help "Apply to all files, not just changed files."
         )
-    <*> commandParser
 
 commandParser :: Parser VogueCommand
 commandParser = subparser
