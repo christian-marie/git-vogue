@@ -11,8 +11,8 @@
 
 module Main where
 
+import           Git.Vogue.VCS.Git
 import           Options.Applicative
-import Git.Vogue.VCS.Git
 
 import           Git.Vogue
 import           Git.Vogue.Types

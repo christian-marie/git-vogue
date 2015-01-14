@@ -26,7 +26,7 @@ data VogueOptions = Options
 -- | Commands, with parameters, to be executed.
 data VogueCommand
     -- | Add git-vogue support to a git repository.
-    = CmdInit 
+    = CmdInit
     -- | Verify that support is installed and plugins happen.
     | CmdVerify
     -- | List the plugins that git-vogue knows about.
@@ -44,7 +44,7 @@ data Check
 data Fix
 
 -- | Result of running a Plugin
-data Result 
+data Result
     = Success Text
     | Failure Text
     | Catastrophe Int Text
@@ -77,9 +77,10 @@ data PluginDiscoverer m = PluginDiscoverer
 
 -- | A VCS backend, such as git.
 data VCS m = VCS
-    { getFiles     :: SearchMode -> m [FilePath] -- ^ Find all staged files
-    , installHook  :: m ()                       -- ^ Install pre-commit hook
-    , removeHook   :: m ()                       -- ^ Remove pre-commit hook
-    , checkHook    :: m Bool                     -- ^ Check pre-commit hook
-    , findTopLevel :: m FilePath                 -- ^ Find the / of the repo
+    { getFiles    :: SearchMode -> m [FilePath] -- ^ Find all staged files
+    , installHook :: m ()                       -- ^ Install pre-commit hook,
+                                                 --   will only be called if
+                                                 --   checkHook returns False
+    , removeHook  :: m ()                       -- ^ Remove pre-commit hook
+    , checkHook   :: m Bool                     -- ^ Check pre-commit hook
     }

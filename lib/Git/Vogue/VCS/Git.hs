@@ -10,7 +10,8 @@
  -- | Provide a VCS implementation for git repositories
 module Git.Vogue.VCS.Git
 (
-    gitVCS
+    gitVCS,
+    git
 ) where
 
 import           Control.Applicative
@@ -23,7 +24,6 @@ import           Data.String.Utils
 import           Paths_git_vogue
 import           Prelude                hiding (maximum)
 import           System.Directory
-import           System.Exit
 import           System.FilePath
 import           System.Posix.Files
 import           System.Process
@@ -34,9 +34,8 @@ gitVCS :: (Functor m, MonadIO m) => VCS m
 gitVCS = VCS
     { getFiles     = gitGetFiles
     , installHook  = gitAddHook
-    , removeHook   = error "remove hook unimplemented"
+    , removeHook   = gitRemoveHook
     , checkHook    = gitCheckHook
-    , findTopLevel = strip <$> git ["rev-parse", "--show-toplevel"]
     }
 
 gitGetFiles
@@ -44,8 +43,8 @@ gitGetFiles
     => SearchMode
     -> m [FilePath]
 gitGetFiles mode = liftIO . existantFiles $
-    case mode of FindAll     -> git ["diff", "--cached", "--name-only"]
-                 FindChanged -> git ["ls-files"]
+    case mode of FindChanged -> git ["diff", "--cached", "--name-only"]
+                 FindAll     -> git ["ls-files"]
   where
     existantFiles f = lines <$> f >>= filterM doesFileExist
 
@@ -61,46 +60,47 @@ gitAddHook
     :: MonadIO m
     => m ()
 gitAddHook = liftIO $ do
-    let hook = ".git" </> "hooks" </> "pre-commit"
-    exists <- fileExist hook
-    if exists
-        then updateHook hook
-        else createHook hook
-  where
-    createHook = copyHookTemplateTo
-    updateHook hook = do
-        content <- readFile hook
-        unless (preCommitCommand `isInfixOf` content) $ do
-            putStrLn $ "A pre-commit hook already exists at \n\t"
-                <> hook
-                <> "\nbut it does not contain the command\n\t"
-                <> preCommitCommand
-                <> "\nPlease edit the hook and add this command yourself!"
-            exitFailure
-        putStrLn "Your commit hook is already in place."
-
--- | Copy the template pre-commit hook to a git repo.
-copyHookTemplateTo
-    :: FilePath
-    -> IO ()
-copyHookTemplateTo hook = do
     template <- getDataFileName "templates/pre-commit"
+    hook <- gitHookFile
     copyFile template hook
     perm <- getPermissions hook
     setPermissions hook $ perm { executable = True }
+
+-- | Remove the hook iff it is precicely the same as the template.
+gitRemoveHook
+    :: MonadIO m
+    => m ()
+gitRemoveHook = liftIO $ do
+    template_contents <- getDataFileName "templates/pre-commit" >>= readFile
+    hook <- gitHookFile
+    hook_contents <- readFile hook
+    if template_contents == hook_contents then
+        removeFile hook
+    else
+        putStrLn $ "Your pre-commit hook appears to be modified. \n"
+                <> "Please manually remove:" <> hook
 
 -- | Use a predicate to check a git commit hook.
 gitCheckHook
     :: MonadIO m
     => m Bool
 gitCheckHook = liftIO $ do
-    exists <- fileExist gitHookFile
+    hook <- gitHookFile
+    exists <- fileExist hook
     if exists
         then do
-            c <- readFile gitHookFile
-            return $ preCommitCommand `isInfixOf` c
+            c <- readFile hook
+            unless (preCommitCommand `isInfixOf` c) .
+                putStrLn $ "A pre-commit hook already exists at \n\t"
+                    <> hook
+                    <> "\nbut it does not contain the command\n\t"
+                    <> preCommitCommand
+                    <> "\nPlease edit the hook and add this command yourself!"
+            return True
         else return False
 
 -- | Where the pre-commit hook lives
-gitHookFile :: FilePath
-gitHookFile = ".git" </> "hooks" </> "pre-commit"
+gitHookFile :: IO FilePath
+gitHookFile = do
+    top_level <- strip <$> git ["rev-parse", "--show-toplevel"]
+    return $ top_level </> ".git" </> "hooks" </> "pre-commit"

@@ -7,28 +7,26 @@
 -- the 3-clause BSD licence.
 --
 
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE RecordWildCards            #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE LambdaCase            #-}
-{-# LANGUAGE TupleSections              #-}
-{-# LANGUAGE ScopedTypeVariables              #-}
-{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE RecordWildCards       #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TupleSections         #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 module Git.Vogue where
 
+import           Control.Applicative
 import           Control.Monad.IO.Class
-import Data.Traversable hiding (sequence)
+import           Data.Maybe
 import           Data.Text.Lazy         (Text)
 import qualified Data.Text.Lazy         as T
 import qualified Data.Text.Lazy.IO      as T
+import           Data.Traversable       hiding (sequence)
 import           Formatting
-import           System.Directory
-import Data.Maybe
-import Control.Applicative
 import           System.Exit
 
 import           Git.Vogue.Types
@@ -41,9 +39,7 @@ runCommand
     -> VCS m
     -> PluginDiscoverer m
     -> m ()
-runCommand cmd search_mode VCS{..} PluginDiscoverer{..} = do
-    findTopLevel >>= liftIO . setCurrentDirectory
-    go cmd
+runCommand cmd search_mode VCS{..} PluginDiscoverer{..} = go cmd
   where
     go CmdInit = do
         already_there <- checkHook
