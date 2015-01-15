@@ -28,7 +28,7 @@ main =
             "Check your Haskell project for ghc-mod problems."
             "git-vogue-ghc-mod - check for ghc-mod problems"
   where
-    f CmdName  = putStrLn "ghc-mod check"
+    f CmdName  = putStrLn "ghc-mod"
     f CmdCheck = ghcModCheck
     f CmdFix   = do
         putStrLn $ "There are outstanding ghc-mod failures, you need to fix this "

@@ -7,114 +7,142 @@
 -- the 3-clause BSD licence.
 --
 
+{-# LANGUAGE OverloadedStrings #-}
+
 module Git.Vogue.PluginDiscoverer.Libexec
 (
+    libExecDiscoverer
 ) where
 
-{--
+import           Control.Applicative
+import           Control.Exception
+import           Control.Monad
+import           Control.Monad.IO.Class
+import           Data.List
+import           Data.List.Split
+import           Data.Maybe
+import           Data.Monoid
+import           Data.String
+import           Data.Text.Lazy         (Text)
+import qualified Data.Text.Lazy         as T
+import           Data.Traversable
+import           System.Directory
+import           System.Environment
+import           System.Exit
+import           System.FilePath
+import           System.Process
 
--- | Execute a plugin in IO
-ioPluginExecutorImpl :: MonadIO m => PluginExecutorImpl m
-ioPluginExecutorImpl =
-    PluginExecutorImpl (f "fix") (f "check")
-  where
-    -- | Given the command sub-type, and the path to the plugin, execute it
-    -- appropriately.
-    --
-    -- This involves the interface described in README under "Plugin design".
-    f :: MonadIO m => String -> SearchMode -> Plugin -> m (Status a)
-    f arg sm (Plugin path) = liftIO $ do
-        name <- getName path
-        fs <- unlines <$> (lines <$> paths sm >>= filterM doesFileExist)
-        (status, out, err) <- readProcessWithExitCode path [arg] fs
-        let glommed = fromString $ out <> err
+import           Git.Vogue.Types
+import           Git.Vogue.VCS.Git      (git)
 
-        return $ case status of
-            ExitSuccess   -> Success name glommed
-            ExitFailure 1 -> Failure name glommed
-            ExitFailure n -> Catastrophe n name glommed
+libExecDiscoverer :: (Functor m, Applicative m, MonadIO m)
+                  => FilePath
+                  -> PluginDiscoverer m
+libExecDiscoverer libexec_dir =
+    PluginDiscoverer (discover libexec_dir) disable enable
 
-    paths FindChanged = git ["diff", "--cached", "--name-only"]
-    paths FindAll     = git ["ls-files"]
-
-    git args = readProcess "git" args ""
-
-    getName path = do
-        (status, name, _) <- readProcessWithExitCode path ["name"] mempty
-        return . PluginName . fromString . strip $ case status of
-            ExitSuccess -> if null name then path else name
-            ExitFailure _ -> path
-
-
-runFix :: (MonadIO m, Functor m) => SearchMode -> Vogue m ()
-runFix sm = do
-    -- See which plugins failed first
-    rs <- ask >>= mapM (\x -> (x,) <$> executeCheck ioPluginExecutorImpl sm x)
-    -- Now fix the failed ones only
-    getWorst (executeFix ioPluginExecutorImpl sm) [ x | (x, Failure{}) <- rs ]
-    >>= outputStatusAndExit
-
--- | Check for broken things.
-runCheck :: MonadIO m => SearchMode -> Vogue m ()
-runCheck sm =
-    ask
-    >>= getWorst (executeCheck ioPluginExecutorImpl sm)
-    >>= outputStatusAndExit
-
-listPlugins :: MonadIO m => Vogue m ()
-listPlugins = do
-    dir <- liftIO ((</> "git-vogue") <$> getLibexecDir)
-    liftIO . putStrLn $ "git-vogue looks for plugins in:\n\n\t"  <> dir <> "\n"
-    plugins <- ask
-    liftIO .  putStr
-         $  "git-vogue knows about the following plugins:\n\n"
-         <> unlines (fmap (('\t':) . pluginName) plugins)
-
--- | Get list of disabled plugins from git configuration.
-disabledPlugins
-    :: (Monad m, Functor m, MonadIO m)
-    => m [String]
-disabledPlugins = lines <$> liftIO (readConfig `catch` none)
-  where
-    readConfig = readProcess "git" ["config", "--get-all", "vogue.disable"] ""
-    none (SomeException _) = return []
-
-
--- | Discover all available plugins.
+-- | Find all plugins within the libexec dir.
 --
 -- This function inspects the $PREFIX/libexec/git-vogue directory and the
 -- directories listed in the $GIT_VOGUE_PATH environmental variable (if
 -- defined) and builds a 'Plugin' for the executables found.
-discoverPlugins :: IO [Plugin]
-discoverPlugins = do
+--
+-- Files that are set non executable or included in the
+discover
+    :: (Functor m, Applicative m, MonadIO m)
+    => FilePath
+    -> m [Plugin m]
+discover libexec_dir = do
     -- Use the environmental variable and $libexec/git-vogue/ directories as
     -- the search path.
-    path <- fromMaybe "" <$> lookupEnv "GIT_VOGUE_PATH"
-    libexec <- (</> "git-vogue") <$> Paths.getLibexecDir
-    let directories = splitOn ":" path <> [libexec]
+    path <- fromMaybe "" <$> liftIO (lookupEnv "GIT_VOGUE_PATH")
+    let directories = splitOn ":" path <> [libexec_dir </> "git-vogue"]
 
-    -- Find all executables in the directories in path.
-    plugins <- (fmap . fmap) fromString
-                  (traverse ls directories >>= filterM isExecutable . concat)
-
-    -- Filter out disabled plugins.
-    disabled_plugins <- disabledPlugins
-    return . filter (not . pluginIn disabled_plugins) $ plugins
+    -- Disable plugins by the name that they present, so that the user does not
+    -- need to know how the backend works.
+    disabled <- gitDisabled
+    ps <- (concat <$> traverse ls directories) >>= traverse (load disabled)
+    return $ sort ps
   where
-    ls :: FilePath -> IO [FilePath]
+    load :: (Functor m, MonadIO m) => [Text] -> FilePath -> m (Plugin m)
+    load disabled fp = do
+        is_x <- executable <$> liftIO (getPermissions fp)
+        if is_x
+            then do
+                -- Extract the plugin name
+                name <- T.strip . T.pack <$> run fp "name"
+                if name `elem` disabled
+                    then return $ disabledPlugin name
+                    else return $ enabledPlugin fp name
+            else
+                -- Corner case, if it's not executable we should just give it
+                -- the name of the path and show it as a disabled plugin.
+                return . disabledPlugin $ "(non-executable) " <> T.pack fp
+
+    run :: MonadIO m => FilePath -> String -> m String
+    run fp cmd = liftIO $ readProcess fp [cmd] ""
+
+    -- | Build a Plugin that is ready to be executed.
+    enabledPlugin :: MonadIO m => FilePath -> Text -> Plugin m
+    enabledPlugin fp name =
+        Plugin { pluginName = name
+               , enabled    = True
+               , runCheck   = runPlugin fp "check"
+               , runFix     = runPlugin fp "fix"
+               }
+
+    disabledPlugin :: Text -> Plugin m
+    disabledPlugin txt =
+        Plugin { pluginName = txt
+               , enabled    = False
+               , runCheck   = error "disabled plugin ran check"
+               , runFix     = error "disabled plugin ran fix"
+               }
+
+    ls :: (Functor m, MonadIO m) => FilePath -> m [FilePath]
     ls p = do
-        exists <- doesDirectoryExist p
+        exists <- liftIO $ doesDirectoryExist p
         if exists
-            then fmap (p </>) <$> getDirectoryContents p
+            then (fmap . fmap) (p </>) (liftIO $ getDirectoryContents p)
+                  >>= liftIO . filterM doesFileExist
             else return []
 
-    isExecutable :: FilePath -> IO Bool
-    isExecutable = fmap executable . getPermissions
+-- Given a path to the plugin, the appropriate sub-command (check or fix),
+-- provide a function from list of files to status.
+--
+-- This involves the interface described in README under "Plugin design".
+runPlugin :: MonadIO m => FilePath -> String -> [FilePath] -> m Result
+runPlugin plugin cmd paths = liftIO $ do
+    (status, out, err) <- readProcessWithExitCode plugin [cmd] (unlines paths)
+    let glommed = fromString $ out <> err
 
-    pluginIn :: [String] -> Plugin -> Bool
-    pluginIn disabled_plugins p =
-        (takeBaseName . unPlugin $ p) `elem` disabled_plugins
+    return $ case status of
+        ExitSuccess   -> Success glommed
+        ExitFailure 1 -> Failure glommed
+        ExitFailure n -> Catastrophe n glommed
 
 
+-- | Get list of disabled plugins from git configuration.
+gitDisabled
+    :: (Monad m, Functor m, MonadIO m)
+    => m [Text]
+gitDisabled = T.lines . T.pack <$> liftIO (readConfig `catch` none)
+  where
+    readConfig = git ["config", "--get-all", "vogue.disable"]
+    none (SomeException _) = return []
 
---}
+-- | Disable a given plugin within the libexec dir.
+disable
+    :: (Functor m, MonadIO m)
+    => PluginName
+    -> m ()
+disable (PluginName name) =
+    void $ git ["config", "--add", "vogue.disable", T.unpack name]
+
+-- | Enable a given plugin within the libexec dir.
+enable
+    :: (Functor m, MonadIO m)
+    => PluginName
+    -> m ()
+enable (PluginName name) =
+    void $ git ["config", "--unset", "vogue.disable", T.unpack name]

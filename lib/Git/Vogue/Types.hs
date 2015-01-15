@@ -9,12 +9,14 @@
 
 {-# LANGUAGE EmptyDataDecls             #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE RecordWildCards            #-}
 
 module Git.Vogue.Types where
 
 import           Data.Monoid
 import           Data.String
 import           Data.Text.Lazy (Text)
+import qualified Data.Text.Lazy as T
 
 -- | Options parsed from the command-line.
 data VogueOptions = Options
@@ -31,6 +33,10 @@ data VogueCommand
     | CmdVerify
     -- | List the plugins that git-vogue knows about.
     | CmdPlugins
+    -- | Disable a plugin
+    | CmdDisable PluginName
+    -- | Enable a plugin
+    | CmdEnable PluginName
     -- | Run check plugins on files in a git repository.
     | CmdRunCheck
     -- | Run fix plugins on files in a git repository.
@@ -58,6 +64,16 @@ data Plugin m = Plugin
     , runFix     :: [FilePath] -> m Result
     }
 
+instance Show (Plugin m) where
+    show Plugin{..} =
+        T.unpack pluginName <> if enabled then mempty else " (disabled)"
+
+instance Eq (Plugin m) where
+    a == b = pluginName a == pluginName b
+
+instance Ord (Plugin m) where
+    compare a b = compare (pluginName a) (pluginName b)
+
 newtype PluginName = PluginName {
     unPluginName :: Text
 } deriving (Show, Ord, Eq, IsString, Monoid)
@@ -71,7 +87,7 @@ data SearchMode = FindAll | FindChanged
 -- libexec directory for executables.
 data PluginDiscoverer m = PluginDiscoverer
     { discoverPlugins :: m [Plugin m]
-    , disablePlugin   :: PluginName -> m [Plugin m]
+    , disablePlugin   :: PluginName -> m ()
     , enablePlugin    :: PluginName -> m ()
     }
 

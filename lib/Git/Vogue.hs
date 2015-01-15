@@ -21,12 +21,14 @@ module Git.Vogue where
 
 import           Control.Applicative
 import           Control.Monad.IO.Class
+import           Data.Foldable
 import           Data.Maybe
 import           Data.Text.Lazy         (Text)
 import qualified Data.Text.Lazy         as T
 import qualified Data.Text.Lazy.IO      as T
 import           Data.Traversable       hiding (sequence)
 import           Formatting
+import           Prelude                hiding (maximum)
 import           System.Exit
 
 import           Git.Vogue.Types
@@ -60,7 +62,13 @@ runCommand cmd search_mode VCS{..} PluginDiscoverer{..} = go cmd
 
     go CmdPlugins = do
         liftIO $  T.putStrLn "git-vogue knows about the following plugins:\n"
-        discoverPlugins >>= liftIO . T.putStrLn . T.unlines . fmap pluginName
+        discoverPlugins >>= liftIO . traverse_ print
+
+    go (CmdDisable plugin) =
+        disablePlugin plugin
+
+    go (CmdEnable plugin) =
+        enablePlugin plugin
 
     go CmdRunCheck = do
         files <- getFiles search_mode

@@ -4,7 +4,7 @@ if [ x"$1" = x"name" ]; then
     exit 0
 else
     read n
-    if [ x"$n" = x".gitignore" ]; then
+    if [ x"$n" = x"magic_file" ]; then
 	echo "yay"
         exit 0
     fi

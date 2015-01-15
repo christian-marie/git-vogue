@@ -19,16 +19,14 @@ import           Control.Monad
 import           Control.Monad.IO.Class
 import           Data.List
 import           Data.Monoid
-import           Data.String
 import           Data.String.Utils
-import           Paths_git_vogue
-import           Prelude                hiding (maximum)
 import           System.Directory
 import           System.FilePath
 import           System.Posix.Files
 import           System.Process
 
 import           Git.Vogue.Types
+import           Paths_git_vogue
 
 gitVCS :: (Functor m, MonadIO m) => VCS m
 gitVCS = VCS

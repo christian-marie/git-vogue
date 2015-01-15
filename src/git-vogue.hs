@@ -11,6 +11,8 @@
 
 module Main where
 
+import qualified Data.Text.Lazy                     as T
+import           Git.Vogue.PluginDiscoverer.Libexec
 import           Git.Vogue.VCS.Git
 import           Options.Applicative
 
@@ -18,6 +20,7 @@ import           Git.Vogue
 import           Git.Vogue.Types
 
 import           Git.Vogue.PluginCommon
+import           Paths_git_vogue
 
 -- | Parse command-line options.
 optionsParser :: Parser VogueOptions
@@ -40,6 +43,10 @@ commandParser = subparser
     <> pCommand "plugins"
                 CmdPlugins
                 "List installed plugins."
+    <> command  "disable" (info (parseEnableDisable CmdDisable)
+                                (progDesc "Disable a plugin"))
+    <> command  "enable"  (info (parseEnableDisable CmdEnable)
+                                (progDesc "Enable a plugin"))
     <> pCommand "check"
                 CmdRunCheck
                 "Run check plugins on files in a git repo"
@@ -48,11 +55,19 @@ commandParser = subparser
                 "Run fix plugins on files a git repo"
     )
 
+parseEnableDisable :: (PluginName -> VogueCommand) -> Parser VogueCommand
+parseEnableDisable ctor = ctor <$> argument (PluginName . T.pack <$> str)
+                                            (metavar "PLUGIN")
+
 -- | Parse the command line and run the command.
 main :: IO ()
 main = do
   opt <- execParser opts
-  runCommand (optCommand opt) (optSearch opt) gitVCS undefined
+  libexec_path <- getLibexecDir
+  runCommand (optCommand opt)
+             (optSearch opt)
+             gitVCS
+             (libExecDiscoverer libexec_path)
   where
     opts = info (helper <*> optionsParser)
       ( fullDesc
