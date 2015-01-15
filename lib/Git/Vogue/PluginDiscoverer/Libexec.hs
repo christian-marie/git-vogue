@@ -85,7 +85,7 @@ discover libexec_dir = do
     -- | Build a Plugin that is ready to be executed.
     enabledPlugin :: MonadIO m => FilePath -> Text -> Plugin m
     enabledPlugin fp name =
-        Plugin { pluginName = name
+        Plugin { pluginName = PluginName name
                , enabled    = True
                , runCheck   = runPlugin fp "check"
                , runFix     = runPlugin fp "fix"
@@ -93,7 +93,7 @@ discover libexec_dir = do
 
     disabledPlugin :: Text -> Plugin m
     disabledPlugin txt =
-        Plugin { pluginName = txt
+        Plugin { pluginName = PluginName txt
                , enabled    = False
                , runCheck   = error "disabled plugin ran check"
                , runFix     = error "disabled plugin ran fix"

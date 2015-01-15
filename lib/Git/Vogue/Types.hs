@@ -58,7 +58,7 @@ data Result
 
 -- | A plugin that can be told to check or fix a list of files
 data Plugin m = Plugin
-    { pluginName :: Text
+    { pluginName :: PluginName
     , enabled    :: Bool
     , runCheck   :: [FilePath] -> m Result
     , runFix     :: [FilePath] -> m Result
@@ -66,7 +66,8 @@ data Plugin m = Plugin
 
 instance Show (Plugin m) where
     show Plugin{..} =
-        T.unpack pluginName <> if enabled then mempty else " (disabled)"
+        T.unpack (unPluginName pluginName)
+            <> if enabled then mempty else " (disabled)"
 
 instance Eq (Plugin m) where
     a == b = pluginName a == pluginName b

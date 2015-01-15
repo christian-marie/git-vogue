@@ -28,7 +28,7 @@ import qualified Data.Text.Lazy         as T
 import qualified Data.Text.Lazy.IO      as T
 import           Data.Traversable       hiding (sequence)
 import           Formatting
-import           Prelude                hiding (maximum)
+import           Prelude                hiding (elem, maximum)
 import           System.Exit
 
 import           Git.Vogue.Types
@@ -64,11 +64,31 @@ runCommand cmd search_mode VCS{..} PluginDiscoverer{..} = go cmd
         liftIO $  T.putStrLn "git-vogue knows about the following plugins:\n"
         discoverPlugins >>= liftIO . traverse_ print
 
-    go (CmdDisable plugin) =
-        disablePlugin plugin
+    go (CmdDisable plugin) = do
+        plugins <- discoverPlugins
+        if plugin `elem` fmap pluginName (filter (not . enabled) plugins)
+            then success "Plugin already disabled"
+            else
+                if plugin `elem` fmap pluginName plugins
+                    then do
+                        disablePlugin plugin
+                        success "Disabled plugin"
+                    else
+                        failure "Unknown plugin"
 
-    go (CmdEnable plugin) =
-        enablePlugin plugin
+
+    go (CmdEnable plugin) = do
+        ps <- discoverPlugins
+        if plugin `elem` fmap pluginName ps
+            then
+                if plugin `elem` (pluginName <$> filter (not . enabled) ps)
+                    then do
+                        enablePlugin plugin
+                        success "Enabled plugin"
+                    else
+                        success "Plugin already enabled"
+            else
+                failure "Unknown plugin"
 
     go CmdRunCheck = do
         files <- getFiles search_mode
@@ -121,16 +141,16 @@ outputStatusAndExit rs = liftIO $
         format ("\x1b[32m"
                % text
                % " succeeded\x1b[0m with:\n"
-               % text) pluginName txt
+               % text) (unPluginName pluginName) txt
     colorize Plugin{..} (Failure txt) =
         format ("\x1b[33m"
                % text
                % " failed\x1b[0m with:\n"
-               % text) pluginName txt
+               % text) (unPluginName pluginName) txt
     colorize Plugin{..} (Catastrophe txt ret) =
         format ("\x1b[31m"
             % text
             % " exploded \x1b[0m with exit code "
             % int
             %":\n"
-            % text) pluginName txt ret
+            % text) (unPluginName pluginName) txt ret
