@@ -119,7 +119,7 @@ outputStatusAndExit
     => [(Plugin z, Result)]
     -> m ()
 outputStatusAndExit rs = liftIO $
-    case worst of
+    case worst rs of
         Success output -> do
             T.putStrLn output
             exitSuccess
@@ -130,8 +130,9 @@ outputStatusAndExit rs = liftIO $
             T.putStrLn output
             exitWith $ ExitFailure 2
   where
-    worst =
-        let txt = T.unlines $ fmap (uncurry colorize) rs
+    worst [] = Success "Vacuous success"
+    worst xs =
+        let txt = T.unlines $ fmap (uncurry colorize) xs
         in case maximum (fmap snd rs) of
             Success{} -> Success txt
             Failure{} -> Failure txt
