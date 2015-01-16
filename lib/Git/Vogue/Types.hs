@@ -83,7 +83,10 @@ newtype PluginName = PluginName {
 
 -- | We want the flexibility of just checking changed files, or maybe checking
 -- all of them.
-data SearchMode = FindAll | FindChanged
+data SearchMode
+    = FindAll
+    | FindChanged
+    | FindSpecific [FilePath]
   deriving (Eq, Show)
 
 -- | A thing that can find plugins, for example we might search through the

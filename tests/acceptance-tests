@@ -54,11 +54,11 @@ if [[ ! ${OUT} =~ .*"cabal failed with".* ]]; then
 fi
 
 if [[ ! ${OUT} =~ .*"hlint succeeded with".* ]]; then
-	fail "hlintdid not succeed"
+	fail "hlint did not succeed"
 fi
 
 if [[ ! ${OUT} =~ .*"Stylish Haskell succeeded with".* ]]; then
-	fail "stylish haskell succeeded with"
+	fail "stylish-haskell succeeded with"
 fi
 
 teardown

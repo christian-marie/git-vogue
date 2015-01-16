@@ -43,6 +43,7 @@ gitGetFiles
 gitGetFiles mode = liftIO . existantFiles $
     case mode of FindChanged -> git ["diff", "--cached", "--name-only"]
                  FindAll     -> git ["ls-files"]
+                 FindSpecific fs -> pure $ unlines fs
   where
     existantFiles f = lines <$> f >>= filterM doesFileExist
 
