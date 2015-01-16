@@ -91,19 +91,19 @@ runCommand cmd search_mode VCS{..} PluginDiscoverer{..} = go cmd
                 failure "Unknown plugin"
 
     go CmdRunCheck = do
-        files <- getFiles search_mode
+        (check_fs, all_fs) <- (,) <$> getFiles search_mode <*> getFiles FindAll
         plugins <- filter enabled <$> discoverPlugins
-        for plugins (\p@Plugin{..} -> (p,) <$> runCheck files)
+        for plugins (\p@Plugin{..} -> (p,) <$> runCheck check_fs all_fs)
             >>= outputStatusAndExit
 
     go CmdRunFix = do
-        files <- getFiles search_mode
+        (check_fs, all_fs) <- (,) <$> getFiles search_mode <*> getFiles FindAll
         plugins <- filter enabled <$> discoverPlugins
         rs <- for plugins $ \p@Plugin{..} -> do
-            r <- runCheck files
+            r <- runCheck check_fs all_fs
             case r of
                 Failure{} -> do
-                    r' <- runFix files
+                    r' <- runFix check_fs all_fs
                     return $ Just (p, r')
                 _  -> return Nothing
 

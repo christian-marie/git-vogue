@@ -9,6 +9,7 @@
 
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedLists       #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE RecordWildCards       #-}
 
@@ -17,12 +18,14 @@ module Main where
 
 import           Control.Applicative
 import           Control.Monad
+import           Data.Map                           (fromList)
 import           System.Directory
 import           System.FilePath
 import           System.IO.Temp
 import           System.Process
 import           Test.Hspec
 
+import           Git.Vogue.PluginCommon
 import           Git.Vogue.PluginDiscoverer.Libexec
 import           Git.Vogue.Types
 import           Git.Vogue.VCS.Git
@@ -35,6 +38,15 @@ main = do
             testGitVCS gitVCS
         describe "Libexec plugin discovery" $
             testLEDiscovery abs_fixtures (libExecDiscoverer "./plugins")
+        describe "Plugin helpers" .
+            it "finds hs projects" $ do
+                hsProjects ["a.hs"] ["a.cabal", "a.hs"] `shouldBe`
+                    fromList [("", ["a.hs"])]
+
+                let nested = ["a.cabal", "a.hs", "b/b.cabal", "b/b.hs"]
+                join hsProjects nested `shouldBe`
+                    fromList [ ("",  ["a.cabal","a.hs"    ])
+                             , ("b/",["b/b.hs","b/b.cabal"])]
 
 testLEDiscovery :: FilePath -> PluginDiscoverer IO -> Spec
 testLEDiscovery fixtures PluginDiscoverer{..} = do
@@ -60,14 +72,14 @@ testLEDiscovery fixtures PluginDiscoverer{..} = do
 
     it "provides check methods that do the expected things" . withSetup $ do
         ps <- filter enabled <$> discoverPlugins
-        rs <- sequence $ fmap (\Plugin{..} -> runCheck ["magic_file"]) ps
+        rs <- sequence $ fmap (\Plugin{..} -> runCheck ["a"] ["a"]) ps
         rs `shouldBe` [ Catastrophe 3 "something broke\n"
                       , Failure "ohnoes\n"
                       , Success "yay\n"]
 
     it "provides fix methods that do the expected things" . withSetup $ do
         ps <- filter enabled <$> discoverPlugins
-        rs <- sequence $ fmap (\Plugin{..} -> runFix ["magic_file"]) ps
+        rs <- sequence $ fmap (\Plugin{..} -> runFix ["a"] ["a"]) ps
         rs `shouldBe` [ Catastrophe 3 "something broke\n"
                       , Failure "ohnoes\n"
                       , Success "yay\n"]

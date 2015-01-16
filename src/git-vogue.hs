@@ -34,23 +34,23 @@ optionsParser = Options
 
 commandParser :: Parser VogueCommand
 commandParser = subparser
-    (  pCommand  "init"
+    (  pureSubCommand  "init"
                  CmdInit
                  "Initialise git-vogue support in a git repo"
-    <> pCommand "verify"
+    <> pureSubCommand "verify"
                 CmdVerify
                 "Check git-vogue support is all legit"
-    <> pCommand "plugins"
+    <> pureSubCommand "plugins"
                 CmdPlugins
                 "List installed plugins."
     <> command  "disable" (info (parseEnableDisable CmdDisable)
                                 (progDesc "Disable a plugin"))
     <> command  "enable"  (info (parseEnableDisable CmdEnable)
                                 (progDesc "Enable a plugin"))
-    <> pCommand "check"
+    <> pureSubCommand "check"
                 CmdRunCheck
                 "Run check plugins on files in a git repo"
-    <> pCommand "fix"
+    <> pureSubCommand "fix"
                 CmdRunFix
                 "Run fix plugins on files a git repo"
     )

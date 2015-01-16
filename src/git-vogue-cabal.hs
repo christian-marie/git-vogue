@@ -11,17 +11,20 @@
 module Main where
 
 import           Control.Monad                                 (unless, when)
+import qualified Data.Map                                      as M
 import           Data.Monoid
+import           Data.Traversable
 import           Distribution.PackageDescription.Check
 import           Distribution.PackageDescription.Configuration (flattenPackageDescription)
 import           Distribution.PackageDescription.Parse         (readPackageDescription)
 import           Distribution.Simple.Utils                     (defaultPackageDesc,
                                                                 toUTF8,
                                                                 wrapText)
-import           Distribution.Verbosity                        (Verbosity,
-                                                                silent)
+import           Distribution.Verbosity                        (silent)
 import           Git.Vogue.PluginCommon
+import           System.Directory
 import           System.Exit
+import           System.FilePath
 
 main :: IO ()
 main = f =<< getPluginCommand
@@ -29,20 +32,30 @@ main = f =<< getPluginCommand
                 "git-vogue-cabal - check for cabal problems"
   where
     f CmdName  = putStrLn "cabal"
-    f CmdCheck = do
-        ok <- check silent
-        unless ok exitFailure
-    f CmdFix     = do
+
+    f (CmdCheck check_fs all_fs) = do
+        -- Grab all the projects dirs we want to traverse through
+        let projects = fmap ("." </>) . M.keys $  hsProjects check_fs all_fs
+        cwd <- getCurrentDirectory >>= canonicalizePath
+        rs <- for projects $ \dir -> do
+            setCurrentDirectory cwd
+            putStrLn $ "Checking " <> dir
+            setCurrentDirectory dir
+            check
+
+        unless (and rs) exitFailure
+
+    f CmdFix{} = do
         putStrLn $ "There are outstanding cabal failures, you need to fix this "
                 <> "manually and then re-run check"
         exitFailure
 
 -- | Runs the same thing as cabal check.
 -- See also "Distribution.Client.Check" in cabal-install.
-check :: Verbosity -> IO Bool
-check verbosity = do
-    pdfile <- defaultPackageDesc verbosity
-    ppd <- readPackageDescription verbosity pdfile
+check :: IO Bool
+check = do
+    pdfile <- defaultPackageDesc silent
+    ppd <- readPackageDescription silent pdfile
     let pkg_desc = flattenPackageDescription ppd
     ioChecks <- checkPackageFiles pkg_desc "."
     let packageChecks = ioChecks <> checkPackage ppd (Just pkg_desc)

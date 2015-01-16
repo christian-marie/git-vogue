@@ -3,11 +3,6 @@ if [ x"$1" = x"name" ]; then
     echo "succeeding"
     exit 0
 else
-    read n
-    if [ x"$n" = x"magic_file" ]; then
-	echo "yay"
-        exit 0
-    fi
-    echo "No files"
-    exit 1
+    echo "yay"
+    exit 0
 fi

@@ -60,8 +60,8 @@ data Result
 data Plugin m = Plugin
     { pluginName :: PluginName
     , enabled    :: Bool
-    , runCheck   :: [FilePath] -> m Result
-    , runFix     :: [FilePath] -> m Result
+    , runCheck   :: [FilePath] -> [FilePath] -> m Result
+    , runFix     :: [FilePath] -> [FilePath] -> m Result
     }
 
 instance Show (Plugin m) where

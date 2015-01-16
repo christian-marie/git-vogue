@@ -111,9 +111,17 @@ discover libexec_dir = do
 -- provide a function from list of files to status.
 --
 -- This involves the interface described in README under "Plugin design".
-runPlugin :: MonadIO m => FilePath -> String -> [FilePath] -> m Result
-runPlugin plugin cmd paths = liftIO $ do
-    (status, out, err) <- readProcessWithExitCode plugin [cmd] (unlines paths)
+runPlugin
+    :: MonadIO m
+    => FilePath
+    -> String
+    -> [FilePath]
+    -> [FilePath]
+    -> m Result
+runPlugin plugin cmd check_fs all_fs = liftIO $ do
+    (status, out, err) <- readProcessWithExitCode plugin [ cmd
+                                                         , unlines check_fs
+                                                         , unlines all_fs] ""
     let glommed = fromString $ out <> err
 
     return $ case status of

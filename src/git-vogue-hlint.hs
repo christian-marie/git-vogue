@@ -37,16 +37,15 @@ main =
             "git-vogue-hlint - check for hlint problems"
   where
     f CmdName  = putStrLn "hlint"
-    f CmdCheck = lint
-    f CmdFix   = do
+    f (CmdCheck fs _) = lint $ filter (isSuffixOf ".hs") fs
+    f CmdFix{} = do
         putStrLn $ "There are outstanding hlint failures, you need to fix this "
                 <> "manually and then re-run check"
         exitFailure
 
--- | Lint all of the .hs files from stdin
-lint ::  IO ()
-lint = do
-    files <- hsFiles
+-- | Lint all of given files
+lint ::  [FilePath] -> IO ()
+lint files = do
     (flags, classify, hint) <- autoSettings'
 
     -- Cpphs is off by default
