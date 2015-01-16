@@ -13,7 +13,9 @@
 
 module Git.Vogue.Types where
 
+import           Data.Function
 import           Data.Monoid
+import           Data.Ord
 import           Data.String
 import           Data.Text.Lazy (Text)
 import qualified Data.Text.Lazy as T
@@ -70,10 +72,10 @@ instance Show (Plugin m) where
             <> if enabled then mempty else " (disabled)"
 
 instance Eq (Plugin m) where
-    a == b = pluginName a == pluginName b
+    (==) = (==) `on` pluginName
 
 instance Ord (Plugin m) where
-    compare a b = compare (pluginName a) (pluginName b)
+    compare = comparing pluginName
 
 newtype PluginName = PluginName {
     unPluginName :: Text

@@ -47,7 +47,10 @@ libExecDiscoverer libexec_dir =
 -- directories listed in the $GIT_VOGUE_PATH environmental variable (if
 -- defined) and builds a 'Plugin' for the executables found.
 --
--- Files that are set non executable or included in the
+-- Files that are set non executable are a corner case, this is not the
+-- recommended way of disabling things.
+--
+-- Files that are in the git config's vogue.disable list are set disabled.
 discover
     :: (Functor m, Applicative m, MonadIO m)
     => FilePath
@@ -123,12 +126,10 @@ runPlugin plugin cmd check_fs all_fs = liftIO $ do
                                                          , unlines check_fs
                                                          , unlines all_fs] ""
     let glommed = fromString $ out <> err
-
     return $ case status of
         ExitSuccess   -> Success glommed
         ExitFailure 1 -> Failure glommed
         ExitFailure n -> Catastrophe n glommed
-
 
 -- | Get list of disabled plugins from git configuration.
 gitDisabled
