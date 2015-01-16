@@ -30,12 +30,12 @@ main = do
             "Check your Haskell project for stylish-haskell-related problems."
             "git-vogue-stylish - check for stylish-haskell problems"
     cfg <- getConfig
-    files <- hsFiles
-    f files cfg cmd
+    f cfg cmd
   where
-    f _ _ CmdName  = putStrLn "stylish"
-    f files cfg CmdCheck = do
-        rs <- traverse (stylishCheckFile cfg) files
+    hsFiles = filter (isSuffixOf ".hs")
+    f _ CmdName  = putStrLn "stylish"
+    f cfg (CmdCheck files _) = do
+        rs <- traverse (stylishCheckFile cfg) (hsFiles files)
         if and rs
             then do
                 putStrLn $ "Checked " <> show (length rs) <> " file(s)"
@@ -43,11 +43,12 @@ main = do
             else
                 exitFailure
 
-    f files cfg CmdFix = do
+    f cfg (CmdFix files _) = do
+        let files' = hsFiles files
         -- Fix all of the things first
-        traverse_ (stylishRunFile cfg) files
+        traverse_ (stylishRunFile cfg) files'
         -- Now double check they are fixed
-        rs <- traverse (stylishCheckFile cfg) files
+        rs <- traverse (stylishCheckFile cfg) files'
         if and rs
             then
                 putStrLn "Style converged"

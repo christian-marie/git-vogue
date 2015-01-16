@@ -7,196 +7,151 @@
 -- the 3-clause BSD licence.
 --
 
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE RecordWildCards            #-}
-{-# LANGUAGE TupleSections              #-}
-{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE LambdaCase            #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE RecordWildCards       #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TupleSections         #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 module Git.Vogue where
 
 import           Control.Applicative
-import           Control.Exception
-import           Control.Monad
 import           Control.Monad.IO.Class
-import           Control.Monad.Reader
-import           Data.List
-import           Data.Monoid
-import           Data.String.Utils
-import           System.Directory
+import           Data.Foldable
+import           Data.Maybe
+import           Data.Text.Lazy         (Text)
+import qualified Data.Text.Lazy         as T
+import qualified Data.Text.Lazy.IO      as T
+import           Data.Traversable       hiding (sequence)
+import           Formatting
+import           Prelude                hiding (elem, maximum)
 import           System.Exit
-import           System.FilePath
-import           System.IO
-import           System.Posix.Files
-import           System.Process
 
-import           Git.Vogue.Plugins
 import           Git.Vogue.Types
-import           Paths_git_vogue
-
--- | Options parsed from the command-line.
-data VogueOptions = Options
-    { optSearch  :: SearchMode
-    , optCommand :: VogueCommand
-    }
-  deriving (Eq, Show)
-
--- | Commands, with parameters, to be executed.
-data VogueCommand
-    -- | Add git-vogue support to a git repository.
-    = CmdInit { templatePath :: Maybe FilePath }
-    -- | Verify that support is installed and plugins happen.
-    | CmdVerify
-    -- | List the plugins that git-vogue knows about.
-    | CmdPlugins
-    -- | Run check plugins on files in a git repository.
-    | CmdRunCheck
-    -- | Run fix plugins on files in a git repository.
-    | CmdRunFix
-  deriving (Eq, Show)
-
--- | Plugins that git-vogue knows about.
---   FIXME: this will become the fix/check modules
-
-newtype Vogue m x = Vogue { vogue :: ReaderT [Plugin] m x }
-  deriving ( Functor, Applicative, Monad
-           , MonadTrans, MonadIO, MonadReader [Plugin] )
-
--- | Execute a Vogue program
-runVogue
-    :: [Plugin]
-    -> Vogue m a
-    -> m a
-runVogue ps (Vogue act) = runReaderT act ps
 
 -- | Execute a git-vogue command.
 runCommand
-    :: (MonadIO m, Functor m)
+    :: forall m. (Applicative m, MonadIO m, Functor m)
     => VogueCommand
     -> SearchMode
-    -> Vogue m ()
-runCommand CmdInit{..} _ = runWithRepoPath (gitAddHook templatePath)
-runCommand CmdVerify   _ = runWithRepoPath (gitCheckHook runsVogue)
-runCommand CmdPlugins  _ = listPlugins
-runCommand CmdRunCheck search = runCheck search
-runCommand CmdRunFix   search = runFix search
-
--- | Try to fix the broken things. We first do one pass to check what's broken,
--- then only run fix on those.
-runFix :: (MonadIO m, Functor m) => SearchMode -> Vogue m ()
-runFix sm = do
-    -- See which plugins failed first
-    rs <- ask >>= mapM (\x -> (x,) <$> executeCheck ioPluginExecutorImpl sm x)
-    -- Now fix the failed ones only
-    getWorst (executeFix ioPluginExecutorImpl sm) [ x | (x, Failure{}) <- rs ]
-    >>= outputStatusAndExit
-
--- | Check for broken things.
-runCheck :: MonadIO m => SearchMode -> Vogue m ()
-runCheck sm =
-    ask
-    >>= getWorst (executeCheck ioPluginExecutorImpl sm)
-    >>= outputStatusAndExit
-
--- | Find the git repository path and pass it to an action.
---
--- Throws an error if the PWD is not in a git repo.
-runWithRepoPath
-    :: MonadIO m
-    => (FilePath -> m a)
-    -> m a
-runWithRepoPath action =
-    -- Get the path to the git repo top-level directory.
-    liftIO (readProcess "git" ["rev-parse", "--show-toplevel"] "")
-    >>= action . strip
-
---- | Command string to insert into pre-commit hooks.
-preCommitCommand :: String
-preCommitCommand = "git-vogue check"
-
--- | Add the git pre-commit hook.
-gitAddHook
-    :: MonadIO m
-    => Maybe FilePath -- ^ Template path
-    -> FilePath       -- ^ Hook path
-    -> Vogue m ()
-gitAddHook template path = liftIO $ do
-    let hook = path </> ".git" </> "hooks" </> "pre-commit"
-    exists <- fileExist hook
-    if exists
-        then updateHook hook
-        else createHook hook
+    -> VCS m
+    -> PluginDiscoverer m
+    -> m ()
+runCommand cmd search_mode VCS{..} PluginDiscoverer{..} = go cmd
   where
-    createHook = copyHookTemplateTo template
-    updateHook hook = do
-        content <- readFile hook
-        unless (preCommitCommand `isInfixOf` content) $ do
-            putStrLn $ "A pre-commit hook already exists at \n\t"
-                <> hook
-                <> "\nbut it does not contain the command\n\t"
-                <> preCommitCommand
-                <> "\nPlease edit the hook and add this command yourself!"
-            exitFailure
-        putStrLn "Your commit hook is already in place."
+    go CmdInit = do
+        already_there <- checkHook
+        if already_there
+            then success "Pre-commit hook is already installed"
+            else do
+                installHook
+                installed <- checkHook
+                if installed
+                    then success "Successfully installed hook"
+                    else failure "Hook failed to install"
 
--- | Copy the template pre-commit hook to a git repo.
-copyHookTemplateTo
-    :: Maybe FilePath
-    -> FilePath
-    -> IO ()
-copyHookTemplateTo maybe_t hook = do
-    template <- maybe (getDataFileName "templates/pre-commit") return maybe_t
-    copyFile template hook
-    perm <- getPermissions hook
-    setPermissions hook $ perm { executable = True }
+    go CmdVerify = do
+        installed <- checkHook
+        if installed
+            then success "Pre-commit hook currently installed"
+            else failure "Pre-commit hook not installed"
 
--- | Use a predicate to check a git commit hook.
-gitCheckHook
+    go CmdPlugins = do
+        liftIO $  T.putStrLn "git-vogue knows about the following plugins:\n"
+        discoverPlugins >>= liftIO . traverse_ print
+
+    go (CmdDisable plugin) = do
+        plugins <- discoverPlugins
+        if plugin `elem` fmap pluginName (filter (not . enabled) plugins)
+            then success "Plugin already disabled"
+            else
+                if plugin `elem` fmap pluginName plugins
+                    then do
+                        disablePlugin plugin
+                        success "Disabled plugin"
+                    else
+                        failure "Unknown plugin"
+
+
+    go (CmdEnable plugin) = do
+        ps <- discoverPlugins
+        if plugin `elem` fmap pluginName ps
+            then
+                if plugin `elem` (pluginName <$> filter (not . enabled) ps)
+                    then do
+                        enablePlugin plugin
+                        success "Enabled plugin"
+                    else
+                        success "Plugin already enabled"
+            else
+                failure "Unknown plugin"
+
+    go CmdRunCheck = do
+        (check_fs, all_fs) <- (,) <$> getFiles search_mode <*> getFiles FindAll
+        plugins <- filter enabled <$> discoverPlugins
+        for plugins (\p@Plugin{..} -> (p,) <$> runCheck check_fs all_fs)
+            >>= outputStatusAndExit
+
+    go CmdRunFix = do
+        (check_fs, all_fs) <- (,) <$> getFiles search_mode <*> getFiles FindAll
+        plugins <- filter enabled <$> discoverPlugins
+        rs <- for plugins $ \p@Plugin{..} -> do
+            r <- runCheck check_fs all_fs
+            case r of
+                Failure{} -> do
+                    r' <- runFix check_fs all_fs
+                    return $ Just (p, r')
+                _  -> return Nothing
+
+        outputStatusAndExit (catMaybes rs)
+
+success, failure :: MonadIO m => Text -> m a
+success msg = liftIO (T.putStrLn msg >> exitSuccess)
+failure msg = liftIO (T.putStrLn msg >> exitFailure)
+
+-- | Output the results of a run and exit with an appropriate return code
+outputStatusAndExit
     :: MonadIO m
-    => (FilePath -> IO Bool)
-    -> FilePath
-    -> Vogue m ()
-gitCheckHook p path = do
-    let hook = path </> ".git" </> "hooks" </> "pre-commit"
-    -- Check it exists (so openFile doesn't explode).
-    exists <- liftIO . fileExist $ hook
-    if exists
-        then checkPredicate hook
-        else failWith $ "Missing file " <> hook
-    liftIO exitSuccess
+    => [(Plugin z, Result)]
+    -> m ()
+outputStatusAndExit rs = liftIO $
+    case worst rs of
+        Success output -> do
+            T.putStrLn output
+            exitSuccess
+        Failure output -> do
+            T.putStrLn output
+            exitWith $ ExitFailure 1
+        Catastrophe _ output -> do
+            T.putStrLn output
+            exitWith $ ExitFailure 2
   where
-    checkPredicate hook = liftIO $ do
-        pass <- p hook
-        unless pass $ failWith "Invalid configuration."
-    failWith msg = liftIO $ do
-        hPutStrLn stderr msg
-        exitFailure
+    worst [] = Success "Vacuous success"
+    worst xs =
+        let txt = T.unlines $ fmap (uncurry colorize) xs
+        in case maximum (fmap snd rs) of
+            Success{} -> Success txt
+            Failure{} -> Failure txt
+            Catastrophe{} -> Catastrophe 0 txt
 
--- | Check that a script seems to run git vogue.
-runsVogue
-    :: FilePath
-    -> IO Bool
-runsVogue path = do
-    c <- readFile path
-    return $ preCommitCommand `isInfixOf` c
-
--- | Print a list of all plugins.
-listPlugins :: MonadIO m => Vogue m ()
-listPlugins = do
-    dir <- liftIO ((</> "git-vogue") <$> getLibexecDir)
-    liftIO . putStrLn $ "git-vogue looks for plugins in:\n\n\t"  <> dir <> "\n"
-    plugins <- ask
-    liftIO .  putStr
-         $  "git-vogue knows about the following plugins:\n\n"
-         <> unlines (fmap (('\t':) . unPlugin) plugins)
-
--- | Get list of disabled plugins from git configuration.
-disabledPlugins
-    :: (Monad m, Functor m, MonadIO m)
-    => m [String]
-disabledPlugins = lines <$> liftIO (readConfig `catch` none)
-  where
-    readConfig = readProcess "git" ["config", "--get-all", "vogue.disable"] ""
-    none (SomeException _) = return []
+    colorize Plugin{..} (Success txt) =
+        format ("\x1b[32m"
+               % text
+               % " succeeded\x1b[0m with:\n"
+               % text) (unPluginName pluginName) txt
+    colorize Plugin{..} (Failure txt) =
+        format ("\x1b[33m"
+               % text
+               % " failed\x1b[0m with:\n"
+               % text) (unPluginName pluginName) txt
+    colorize Plugin{..} (Catastrophe txt ret) =
+        format ("\x1b[31m"
+            % text
+            % " exploded \x1b[0m with exit code "
+            % int
+            %":\n"
+            % text) (unPluginName pluginName) txt ret

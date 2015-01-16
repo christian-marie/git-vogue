@@ -11,22 +11,16 @@
 
 module Main where
 
-import           Control.Monad
-import           Data.List.Split
-import           Data.Maybe
-import           Data.String
-import           Data.Traversable
+import qualified Data.Text.Lazy                     as T
+import           Git.Vogue.PluginDiscoverer.Libexec
+import           Git.Vogue.VCS.Git
 import           Options.Applicative
-import           Options.Applicative.Types
-import           System.Directory
-import           System.Environment
-import           System.FilePath
 
 import           Git.Vogue
 import           Git.Vogue.Types
 
 import           Git.Vogue.PluginCommon
-import qualified Paths_git_vogue           as Paths
+import           Paths_git_vogue
 
 -- | Parse command-line options.
 optionsParser :: Parser VogueOptions
@@ -45,68 +39,40 @@ optionsParser = flip Options
 
 commandParser :: Parser VogueCommand
 commandParser = subparser
-    ( command "init" (info pInit
-        (progDesc "Initialise git-vogue support in a git repo"))
-    <> pCommand "verify"
+    (  pureSubCommand  "init"
+                 CmdInit
+                 "Initialise git-vogue support in a git repo"
+    <> pureSubCommand "verify"
                 CmdVerify
                 "Check git-vogue support is all legit"
-    <> pCommand "plugins"
+    <> pureSubCommand "plugins"
                 CmdPlugins
                 "List installed plugins."
-    <> pCommand "check"
+    <> command  "disable" (info (parseEnableDisable CmdDisable)
+                                (progDesc "Disable a plugin"))
+    <> command  "enable"  (info (parseEnableDisable CmdEnable)
+                                (progDesc "Enable a plugin"))
+    <> pureSubCommand "check"
                 CmdRunCheck
                 "Run check plugins on files in a git repo"
-    <> pCommand "fix"
+    <> pureSubCommand "fix"
                 CmdRunFix
                 "Run fix plugins on files a git repo"
     )
-  where
-    pInit = CmdInit <$> option (Just <$> readerAsk)
-        (  long "template"
-        <> value Nothing
-        )
 
--- | Discover all available plugins.
---
--- This function inspects the $PREFIX/libexec/git-vogue directory and the
--- directories listed in the $GIT_VOGUE_PATH environmental variable (if
--- defined) and builds a 'Plugin' for the executables found.
-discoverPlugins :: IO [Plugin]
-discoverPlugins = do
-    -- Use the environmental variable and $libexec/git-vogue/ directories as
-    -- the search path.
-    path <- fromMaybe "" <$> lookupEnv "GIT_VOGUE_PATH"
-    libexec <- (</> "git-vogue") <$> Paths.getLibexecDir
-    let directories = splitOn ":" path <> [libexec]
-
-    -- Find all executables in the directories in path.
-    plugins <- (fmap . fmap) fromString
-                  (traverse ls directories >>= filterM isExecutable . concat)
-
-    -- Filter out disabled plugins.
-    disabled_plugins <- disabledPlugins
-    return . filter (not . pluginIn disabled_plugins) $ plugins
-  where
-    ls :: FilePath -> IO [FilePath]
-    ls p = do
-        exists <- doesDirectoryExist p
-        if exists
-            then fmap (p </>) <$> getDirectoryContents p
-            else return []
-
-    isExecutable :: FilePath -> IO Bool
-    isExecutable = fmap executable . getPermissions
-
-    pluginIn :: [String] -> Plugin -> Bool
-    pluginIn disabled_plugins p =
-        (takeBaseName . unPlugin $ p) `elem` disabled_plugins
+parseEnableDisable :: (PluginName -> VogueCommand) -> Parser VogueCommand
+parseEnableDisable ctor = ctor <$> argument (PluginName . T.pack <$> str)
+                                            (metavar "PLUGIN")
 
 -- | Parse the command line and run the command.
 main :: IO ()
 main = do
   opt <- execParser opts
-  plugins <- discoverPlugins
-  runVogue plugins (runCommand (optCommand opt) (optSearch opt))
+  libexec_path <- getLibexecDir
+  runCommand (optCommand opt)
+             (optSearch opt)
+             gitVCS
+             (libExecDiscoverer libexec_path)
   where
     opts = info (helper <*> optionsParser)
       ( fullDesc

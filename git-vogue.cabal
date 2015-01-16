@@ -27,7 +27,8 @@ library
   hs-source-dirs:      lib
   exposed-modules:     Git.Vogue
                        Git.Vogue.Types
-                       Git.Vogue.Plugins
+                       Git.Vogue.VCS.Git
+                       Git.Vogue.PluginDiscoverer.Libexec
                        Git.Vogue.PluginCommon
   other-modules:       Paths_git_vogue
   build-depends:       base >=4.7 && <4.8
@@ -35,6 +36,8 @@ library
                      , directory
                      , filepath
                      , process
+                     , containers
+                     , list-tries
                      , formatting
                      , split
                      , text
@@ -54,6 +57,7 @@ executable git-vogue
   build-depends:       base >=4.7 && <4.8
                      , filepath
                      , directory
+                     , text
                      , git-vogue
                      , optparse-applicative
                      , split
@@ -64,7 +68,10 @@ executable git-vogue-cabal
   main-is:             git-vogue-cabal.hs
   build-depends:       base >=4.7 && <4.8
                      , Cabal
+                     , containers
                      , git-vogue
+                     , directory
+                     , filepath
                      , process
 
 executable git-vogue-hlint
@@ -104,38 +111,27 @@ executable git-vogue-ghc-mod
   build-depends:       base >=4.7 && <4.8
                      , Diff
                      , directory
+                     , containers
                      , filepath
                      , git-vogue
                      , process
                      , strict
                      , ghc-mod
 
-test-suite test-git-setup
+test-suite unit
   type:                exitcode-stdio-1.0
   default-language:    Haskell2010
   hs-source-dirs:      tests
-  main-is:             git-setup.hs
+  main-is:             unit.hs
   build-depends:       base >=4.7 && <4.8
                      , directory
                      , filepath
+                     , containers
                      , git-vogue
                      , hspec
+                     , temporary
                      , process
                      , transformers
-                     , unix
-
-test-suite test-plugins
-  type:                exitcode-stdio-1.0
-  default-language:    Haskell2010
-  hs-source-dirs:      tests
-  main-is:             plugins.hs
-  build-depends:       base >=4.7 && <4.8
-                     , filepath
-                     , git-vogue
-                     , hspec
-                     , process
-                     , transformers
-                     , transformers-base
                      , unix
 
 -- vim: set tabstop=21 expandtab:
