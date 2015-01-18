@@ -32,7 +32,6 @@ library
                        Git.Vogue.PluginCommon
   other-modules:       Paths_git_vogue
   build-depends:       base >=4.7 && <4.8
-                     , MissingH
                      , directory
                      , filepath
                      , process
