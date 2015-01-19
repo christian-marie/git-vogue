@@ -101,8 +101,9 @@ data PluginDiscoverer m = PluginDiscoverer
 data VCS m = VCS
     { getFiles    :: SearchMode -> m [FilePath] -- ^ Find all staged files
     , installHook :: m ()                       -- ^ Install pre-commit hook,
-                                                 --   will only be called if
-                                                 --   checkHook returns False
+                                                --   will only be called if
+                                                --   checkHook returns False
     , removeHook  :: m ()                       -- ^ Remove pre-commit hook
     , checkHook   :: m Bool                     -- ^ Check pre-commit hook
+    , getTopLevel :: m FilePath                 -- ^ Check pre-commit hook
     }

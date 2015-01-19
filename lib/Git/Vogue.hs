@@ -30,6 +30,7 @@ import qualified Data.Text.Lazy.IO      as T
 import           Data.Traversable       hiding (sequence)
 import           Formatting
 import           Prelude                hiding (elem, maximum)
+import           System.Directory
 import           System.Exit
 
 import           Git.Vogue.Types
@@ -44,7 +45,9 @@ runCommand
     -> m ()
 runCommand cmd search_mode VCS{..} PluginDiscoverer{..} = go cmd
   where
+    cd = getTopLevel >>= liftIO . setCurrentDirectory
     go CmdInit = do
+        cd
         already_there <- checkHook
         if already_there
             then success "Pre-commit hook is already installed"
@@ -56,6 +59,7 @@ runCommand cmd search_mode VCS{..} PluginDiscoverer{..} = go cmd
                     else failure "Hook failed to install"
 
     go CmdVerify = do
+        cd
         installed <- checkHook
         if installed
             then success "Pre-commit hook currently installed"
@@ -92,11 +96,13 @@ runCommand cmd search_mode VCS{..} PluginDiscoverer{..} = go cmd
                 failure "Unknown plugin"
 
     go CmdRunCheck = do
+        cd
         (check_fs, all_fs, plugins) <- things
         for plugins (\p@Plugin{..} -> (p,) <$> runCheck check_fs all_fs)
             >>= outputStatusAndExit
 
     go CmdRunFix = do
+        cd
         (check_fs, all_fs, plugins) <- things
         rs <- for plugins $ \p@Plugin{..} -> do
             r <- runCheck check_fs all_fs

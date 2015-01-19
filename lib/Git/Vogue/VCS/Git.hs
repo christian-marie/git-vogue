@@ -34,6 +34,7 @@ gitVCS = VCS
     , installHook  = gitAddHook
     , removeHook   = gitRemoveHook
     , checkHook    = gitCheckHook
+    , getTopLevel  = gitTopLevel
     }
 
 gitGetFiles
@@ -99,9 +100,16 @@ gitCheckHook = liftIO $ do
         else return False
 
 -- | Where the pre-commit hook lives
-gitHookFile :: IO FilePath
-gitHookFile = do
-    top_level <- strip <$> git ["rev-parse", "--show-toplevel"]
-    return $ top_level </> ".git" </> "hooks" </> "pre-commit"
-  where
-    strip = join fmap (reverse . dropWhile isSpace)
+gitHookFile
+    :: MonadIO m
+    => m FilePath
+gitHookFile = liftIO $ do
+    dir <- gitTopLevel
+    return $ dir </> ".git" </> "hooks" </> "pre-commit"
+
+gitTopLevel
+    :: MonadIO m
+    => m FilePath
+gitTopLevel = liftIO $ do
+    let strip = join fmap (reverse . dropWhile isSpace)
+    strip <$> git ["rev-parse", "--show-toplevel"]
