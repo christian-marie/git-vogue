@@ -42,26 +42,16 @@ auto-fixing is stylish-haskell.
 
 # Plugin discovery/disabling
 
-Running `git-vogue plugins` will show you the libexec directory in which
-git-vogue will discover plugins.
+Running `git-vogue plugins` will show you which plugins are currently detected
+and enabled. This set can be tweaked on a per-repository basis with git-vogue
+enable and git-vogue disable.
 
-Should one or more plugins annoy you, you may disable it globally by setting it
-non-executable:
-
-```bash
-chmod -x .cabal/libexec/git-vogue/git-vogue-stylish
-```
-
-Alternatively you can disable plugins on a per-repository, per-user, or
-per-system basis by adding the file name to the `vogue.disable` key in your git
-configuration:
+Alternatively you can disable plugins on a per-system basis by adding the file
+name to the `vogue.disable` key in your git global configuration:
 
 ````bash
-git config --local --add vogue.disable git-vogue-a-plugin
-git config --global --add vogue.disable git-vogue-another-plugin
+git config --global --add vogue.disable cabal
 ````
-
-A more sophisticated interface to plugin manipulation is planned.
 
 # Plugins
 
@@ -119,20 +109,20 @@ independently.
 Plugin specification
 -------------------
 
-**The interface** for an executable (to be called by git-vogue) is a single
-command line argument, one of:
-
-* check
-* fix
-* name
+**The interface** for an executable (to be called by git-vogue) is a command
+line argument, one of {check,fix,name}, followed by a list of files that are to
+be checked, and then a list of all the files in the repository that are not
+ignored. These lists are newline separated. 
 
 The plugin can assume that the CWD will be set to the top-level directory of
 the package.
 
-The plugin will receive a list of all files in the current repository that may
-be looked at via STDIN when running in "check" or "fix" mode. These file paths
-will be absolute and newline separated. The plugin is expected to filter them
-appropriate to its needs.
+Here's how you might run stylish-haskell on all files in the current directory:
+
+```
+cd dir-to-check;
+path-to-libexec/git-vogue-stylish check "$(find .)" "$(find .)"
+```
 
 ## Invariants for well-behaved plugin commands
 
