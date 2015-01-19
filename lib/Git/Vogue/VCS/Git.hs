@@ -17,9 +17,9 @@ module Git.Vogue.VCS.Git
 import           Control.Applicative
 import           Control.Monad
 import           Control.Monad.IO.Class
+import           Data.Char              (isSpace)
 import           Data.List
 import           Data.Monoid
-import           Data.String.Utils
 import           System.Directory
 import           System.FilePath
 import           System.Posix.Files
@@ -103,3 +103,5 @@ gitHookFile :: IO FilePath
 gitHookFile = do
     top_level <- strip <$> git ["rev-parse", "--show-toplevel"]
     return $ top_level </> ".git" </> "hooks" </> "pre-commit"
+  where
+    strip = join fmap (reverse . dropWhile isSpace)
