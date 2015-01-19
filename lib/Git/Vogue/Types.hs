@@ -105,5 +105,5 @@ data VCS m = VCS
                                                 --   checkHook returns False
     , removeHook  :: m ()                       -- ^ Remove pre-commit hook
     , checkHook   :: m Bool                     -- ^ Check pre-commit hook
-    , getTopLevel :: m FilePath                 -- ^ Check pre-commit hook
+    , getTopLevel :: m FilePath                 -- ^ Find the / of the repo
     }
