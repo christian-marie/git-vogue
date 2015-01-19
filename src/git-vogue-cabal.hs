@@ -59,11 +59,10 @@ check = do
     ppd <- readPackageDescription silent pdfile
     let pkg_desc = flattenPackageDescription ppd
     ioChecks <- checkPackageFiles pkg_desc "."
-    let packageChecks = ioChecks <> checkPackage ppd (Just pkg_desc)
+    let packageChecks = filter goodCheck $ ioChecks <> checkPackage ppd (Just pkg_desc)
         buildImpossible = [ x | x@PackageBuildImpossible {} <- packageChecks ]
         buildWarning    = [ x | x@PackageBuildWarning {}    <- packageChecks ]
-        distSuspicious  = [ x | x@(PackageDistSuspicious msg) <- packageChecks
-                              , not ("ghc-options: -O2" `isInfixOf` msg)]
+        distSuspicious  = [ x | x@PackageDistSuspicious{}   <- packageChecks ]
         distInexusable  = [ x | x@PackageDistInexcusable {} <- packageChecks ]
     unless (null buildImpossible) $ do
         putStrLn "The package will not build sanely due to these errors:"
@@ -86,5 +85,9 @@ check = do
         putStrLn "Checked cabal file"
     return (null packageChecks)
   where
+    goodCheck (PackageDistSuspicious msg) =
+        not $ "ghc-options: -O2" `isInfixOf` msg
+    goodCheck _ = True
+
     printCheckMessages = mapM_ (putStrLn . format . explanation)
     format = toUTF8 . wrapText . ("* "++)
