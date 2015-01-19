@@ -11,6 +11,7 @@
 module Main where
 
 import           Control.Monad                                 (unless, when)
+import           Data.List
 import qualified Data.Map                                      as M
 import           Data.Monoid
 import           Data.Traversable
@@ -61,7 +62,8 @@ check = do
     let packageChecks = ioChecks <> checkPackage ppd (Just pkg_desc)
         buildImpossible = [ x | x@PackageBuildImpossible {} <- packageChecks ]
         buildWarning    = [ x | x@PackageBuildWarning {}    <- packageChecks ]
-        distSuspicious  = [ x | x@PackageDistSuspicious {}  <- packageChecks ]
+        distSuspicious  = [ x | x@(PackageDistSuspicious msg) <- packageChecks
+                              , not ("ghc-options: -O2" `isInfixOf` msg)]
         distInexusable  = [ x | x@PackageDistInexcusable {} <- packageChecks ]
     unless (null buildImpossible) $ do
         putStrLn "The package will not build sanely due to these errors:"

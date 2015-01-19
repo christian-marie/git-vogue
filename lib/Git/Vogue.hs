@@ -20,6 +20,7 @@
 module Git.Vogue where
 
 import           Control.Applicative
+import           Control.Monad
 import           Control.Monad.IO.Class
 import           Data.Foldable
 import           Data.Maybe
@@ -91,14 +92,12 @@ runCommand cmd search_mode VCS{..} PluginDiscoverer{..} = go cmd
                 failure "Unknown plugin"
 
     go CmdRunCheck = do
-        (check_fs, all_fs) <- (,) <$> getFiles search_mode <*> getFiles FindAll
-        plugins <- filter enabled <$> discoverPlugins
+        (check_fs, all_fs, plugins) <- things
         for plugins (\p@Plugin{..} -> (p,) <$> runCheck check_fs all_fs)
             >>= outputStatusAndExit
 
     go CmdRunFix = do
-        (check_fs, all_fs) <- (,) <$> getFiles search_mode <*> getFiles FindAll
-        plugins <- filter enabled <$> discoverPlugins
+        (check_fs, all_fs, plugins) <- things
         rs <- for plugins $ \p@Plugin{..} -> do
             r <- runCheck check_fs all_fs
             case r of
@@ -108,6 +107,16 @@ runCommand cmd search_mode VCS{..} PluginDiscoverer{..} = go cmd
                 _  -> return Nothing
 
         outputStatusAndExit (catMaybes rs)
+
+    things = do
+        check_fs <- getFiles search_mode
+        when (null check_fs) (success "Vacuous success - Nothing to check")
+
+        plugins <- filter enabled <$> discoverPlugins
+        when (null check_fs) (success "Vacuous success - No plugins enabled")
+
+        all_fs <- getFiles FindAll
+        return (check_fs, all_fs, plugins)
 
 success, failure :: MonadIO m => Text -> m a
 success msg = liftIO (T.putStrLn msg >> exitSuccess)
