@@ -40,6 +40,8 @@ main =
         cwd <- getCurrentDirectory  >>= canonicalizePath
         -- Have to change to the project directory for each ghc-mod run or it
         -- will be sad.
+        --
+        -- We run ghcModCheck in each, which will exit on the first failure.
         forWithKey_ (hsProjects check_fs all_fs) $ \dir fs -> do
             let pdir = "." </> dir
             putStrLn $ "Checking " <> pdir
@@ -50,10 +52,15 @@ main =
             --
             -- Setup.hs can import cabal things magically, without requiring it to
             -- be mentioned in cabal (which ghc-mod hates)
+            let rels = catMaybes $ fmap (stripPrefix dir) fs
             ghcModCheck $ filter (\x ->    not ("HLint.hs" `isSuffixOf` x)
                                         && not ("Setup.hs" `isSuffixOf` x)
-                                        && ".hs" `isSuffixOf` x) fs
+                                        && ".hs" `isSuffixOf` x) rels
             setCurrentDirectory cwd
+
+        -- If we got this far, there were no failures, so success.
+        exitSuccess
+
     f CmdFix{} = do
         putStrLn $ "There are outstanding ghc-mod failures, you need to fix this "
                 <> "manually and then re-run check"
@@ -100,9 +107,8 @@ ghcModCheck files = do
 
     let warns = catMaybes maybe_ws
     if null warns
-        then do
+        then
             putStrLn $ "Checked " <> show (length files)  <> " file(s)"
-            exitSuccess
         else do
             traverse_ putStrLn warns
             exitFailure
