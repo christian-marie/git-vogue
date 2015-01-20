@@ -45,8 +45,8 @@ main = do
 
                 let nested = ["a.cabal", "a.hs", "b/b.cabal", "b/b.hs"]
                 join hsProjects nested `shouldBe`
-                    fromList [ ("",  ["a.cabal","a.hs"    ])
-                             , ("b/",["b/b.hs","b/b.cabal"])]
+                    fromList [ ("",["a.cabal","a.hs"])
+                             , ("b/",["b.hs","b.cabal"]) ]
 
 testLEDiscovery :: FilePath -> PluginDiscoverer IO -> Spec
 testLEDiscovery fixtures PluginDiscoverer{..} = do
