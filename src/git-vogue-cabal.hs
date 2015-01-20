@@ -11,10 +11,9 @@
 module Main where
 
 import           Control.Monad                                 (unless, when)
-import           Data.List
-import qualified Data.Map                                      as M
+import           Data.Foldable
+import           Data.List                                     hiding (and)
 import           Data.Monoid
-import           Data.Traversable
 import           Distribution.PackageDescription.Check
 import           Distribution.PackageDescription.Configuration (flattenPackageDescription)
 import           Distribution.PackageDescription.Parse         (readPackageDescription)
@@ -23,9 +22,9 @@ import           Distribution.Simple.Utils                     (defaultPackageDe
                                                                 wrapText)
 import           Distribution.Verbosity                        (silent)
 import           Git.Vogue.PluginCommon
-import           System.Directory
+import           Prelude                                       hiding (and,
+                                                                mapM_)
 import           System.Exit
-import           System.FilePath
 
 main :: IO ()
 main = f =<< getPluginCommand
@@ -36,14 +35,7 @@ main = f =<< getPluginCommand
 
     f (CmdCheck check_fs all_fs) = do
         -- Grab all the projects dirs we want to traverse through
-        let projects = fmap ("." </>) . M.keys $  hsProjects check_fs all_fs
-        cwd <- getCurrentDirectory >>= canonicalizePath
-        rs <- for projects $ \dir -> do
-            setCurrentDirectory cwd
-            putStrLn $ "Checking " <> dir
-            setCurrentDirectory dir
-            check
-
+        rs <- forProjects (hsProjects check_fs all_fs) (const check)
         unless (and rs) exitFailure
 
     f CmdFix{} = do
