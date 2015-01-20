@@ -12,6 +12,8 @@
 -- | Common helpers for git vogue plugins
 module Git.Vogue.PluginCommon
 (
+    forWithKey_,
+    forWithKey,
     hsProjects,
     getPluginCommand,
     pureSubCommand,
@@ -19,9 +21,11 @@ module Git.Vogue.PluginCommon
 ) where
 
 import           Control.Applicative
+import           Data.Functor
 import           Data.List
 import           Data.Map.Strict               (Map)
 import qualified Data.Map.Strict               as M
+import           Data.Maybe
 import           Data.Monoid
 import           Options.Applicative
 
@@ -29,6 +33,13 @@ import           Data.ListTrie.Patricia.Map.Eq (TrieMap, deleteSuffixes,
                                                 fromList, lookupPrefix, toList)
 import           Data.Ord
 import           System.FilePath.Posix
+
+-- | Helper for traversing a Map with keys
+forWithKey_ :: Applicative f => Map k v -> (k -> v -> f ()) -> f ()
+forWithKey_ m a = void $ M.traverseWithKey a m
+
+forWithKey :: Applicative f => Map k v -> (k -> v -> f a) -> f (Map k a)
+forWithKey = flip M.traverseWithKey
 
 -- | Find .cabal files in hsFiles and arrange children underneath these
 -- "headings".
@@ -45,7 +56,13 @@ hsProjects check_fs all_fs =
     -- it.
     let (complete_proj_map, _) = findProjects (isSuffixOf ".cabal") all_fs
     -- Now do the awesome quadratic thing and traverse lists.
-    in fmap (filter (`elem` check_fs)) complete_proj_map
+        proj_map =  fmap (filter (`elem` check_fs)) complete_proj_map
+    -- And finally strip the prefixes of the dirs, so that this looks a bit
+    -- like a one level trie.
+        bug = error "BUG: hsProjects: A key was not a prefix of its elements"
+    in M.mapWithKey (\k -> fmap (fromMaybe bug . stripPrefix k)) proj_map
+
+
 
 -- | Given a predicate to identify a file as being in the "root" of a
 -- directory and a bunch of FilePaths, figure out which file paths belong under
