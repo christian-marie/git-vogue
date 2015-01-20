@@ -10,13 +10,10 @@
 -- | Description: Check with "cabal check".
 module Main where
 
-import           Control.Applicative
 import           Data.Char
 import           Data.Foldable
 import           Data.Functor
 import           Data.List               hiding (notElem)
-import           Data.Map                (Map)
-import qualified Data.Map                as M
 import           Data.Maybe
 import           Data.Monoid
 import           Data.Traversable
@@ -33,8 +30,6 @@ main =
             "Check your Haskell project for ghc-mod problems."
             "git-vogue-ghc-mod - check for ghc-mod problems"
   where
-    forWithKey_ :: Applicative f => Map k v -> (k -> v -> f ()) -> f ()
-    forWithKey_ m a = void $ M.traverseWithKey a m
     f CmdName  = putStrLn "ghc-mod"
     f (CmdCheck check_fs all_fs) = do
         cwd <- getCurrentDirectory  >>= canonicalizePath
@@ -52,10 +47,9 @@ main =
             --
             -- Setup.hs can import cabal things magically, without requiring it to
             -- be mentioned in cabal (which ghc-mod hates)
-            let rels = catMaybes $ fmap (stripPrefix dir) fs
             ghcModCheck $ filter (\x ->    not ("HLint.hs" `isSuffixOf` x)
                                         && not ("Setup.hs" `isSuffixOf` x)
-                                        && ".hs" `isSuffixOf` x) rels
+                                        && ".hs" `isSuffixOf` x) fs
             setCurrentDirectory cwd
 
         -- If we got this far, there were no failures, so success.
