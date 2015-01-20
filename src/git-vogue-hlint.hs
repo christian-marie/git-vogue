@@ -75,8 +75,6 @@ main =
                                      Warning -> True
                                      Error   -> True
 
-
-
     f CmdFix{} = do
         putStrLn $ "There are outstanding hlint failures, you need to fix this "
                 <> "manually and then re-run check"
