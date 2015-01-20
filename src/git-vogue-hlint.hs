@@ -44,9 +44,10 @@ main =
         cwd <- getCurrentDirectory  >>= canonicalizePath
         -- Traverse the files, parsing and processing as we go for efficiency
         rs <- forWithKey (hsProjects check_fs all_fs) $ \dir fs -> do
+            let hss = filter (isSuffixOf ".hs") fs
             let pdir = "." </> dir
             putStrLn $ "Checking " <> pdir
-                     <> " (" <> show (length fs) <> ") files)"
+                     <> " (" <> show (length hss) <> " files)"
             setCurrentDirectory pdir
 
             (flags, classify, hint) <- autoSettings'
@@ -54,7 +55,7 @@ main =
             let flags' = flags { cppFlags = Cpphs defaultCpphsOptions }
 
 
-            x <- for (filter (isSuffixOf ".hs") fs) $ \file ->
+            x <- for hss $ \file ->
                 process classify hint <$> parseModuleEx flags' file Nothing
             setCurrentDirectory cwd
             return x
