@@ -153,7 +153,7 @@ colorize Plugin{..} (Success txt) =
             % " succeeded\x1b[0m with:\n"
             % text) (unPluginName pluginName) txt
 colorize Plugin{..} (Failure txt) =
-    format ("\x1b[33m"
+    format ("\x1b[31m"
             % text
             % " failed\x1b[0m with:\n"
             % text) (unPluginName pluginName) txt

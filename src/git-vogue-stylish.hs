@@ -38,7 +38,7 @@ main = do
         rs <- traverse (stylishCheckFile cfg) (hsFiles files)
         if and rs
             then do
-                putStrLn $ "Checked " <> show (length rs) <> " file(s)"
+                outputGood $ "Checked " <> show (length rs) <> " file(s)"
                 exitSuccess
             else
                 exitFailure
@@ -51,9 +51,9 @@ main = do
         rs <- traverse (stylishCheckFile cfg) files'
         if and rs
             then
-                putStrLn "Style converged"
+                outputGood "Style converged"
             else do
-                putStrLn "Style did not converge, bailing"
+                outputBad "Style did not converge, bailing"
                 exitFailure
 
 -- | Try various configuration locations as per stylish-haskell binary
@@ -75,7 +75,7 @@ stylishCheckFile cfg fp = stylishFile fp cfg (\original stylish ->
     case getStyleDiffs original stylish of
         [] -> return True
         x  -> do
-            putStrLn $ "\x1b[33m" <> fp <> "\x1b[0m"
+            outputBad $ "\x1b[33m" <> fp <> "\x1b[0m"
                     <> " has differing style:\n" <> ppDiff x
             return False
     )
