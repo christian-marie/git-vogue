@@ -39,7 +39,7 @@ main = f =<< getPluginCommand
         unless (and rs) exitFailure
 
     f CmdFix{} = do
-        putStrLn $ "There are outstanding cabal failures, you need to fix this "
+        outputBad $ "There are outstanding cabal failures, you need to fix this "
                 <> "manually and then re-run check"
         exitFailure
 
@@ -57,29 +57,29 @@ check = do
         distSuspicious  = [ x | x@PackageDistSuspicious{}   <- packageChecks ]
         distInexusable  = [ x | x@PackageDistInexcusable {} <- packageChecks ]
     unless (null buildImpossible) $ do
-        putStrLn "The package will not build sanely due to these errors:"
+        outputBad "The package will not build sanely due to these errors:"
         printCheckMessages buildImpossible
     unless (null buildWarning) $ do
-        putStrLn "The following warnings are likely affect your build negatively:"
+        outputBad "The following warnings are likely affect your build negatively:"
         printCheckMessages buildWarning
     unless (null distSuspicious) $ do
-        putStrLn "These warnings may cause trouble when distributing the package:"
+        outputBad "These warnings may cause trouble when distributing the package:"
         printCheckMessages distSuspicious
     unless (null distInexusable) $ do
-        putStrLn "The following errors will cause portability problems on other environments:"
+        outputBad "The following errors will cause portability problems on other environments:"
         printCheckMessages distInexusable
     let isDistError (PackageDistSuspicious {}) = False
         isDistError _                          = True
         errors = filter isDistError packageChecks
     unless (null errors) $
-        putStrLn "Hackage would reject this package."
+        outputBad "Hackage would reject this package."
     when (null packageChecks) $
-        putStrLn "Checked cabal file"
+        outputGood "Checked cabal file"
     return (null packageChecks)
   where
     goodCheck (PackageDistSuspicious msg) =
         not $ "ghc-options: -O2" `isInfixOf` msg
     goodCheck _ = True
 
-    printCheckMessages = mapM_ (putStrLn . format . explanation)
+    printCheckMessages = mapM_ (outputBad . format . explanation)
     format = toUTF8 . wrapText . ("* "++)

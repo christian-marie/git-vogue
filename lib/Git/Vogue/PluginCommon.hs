@@ -12,17 +12,29 @@
 -- | Common helpers for git vogue plugins
 module Git.Vogue.PluginCommon
 (
-    forWithKey_,
-    forWithKey,
+    -- * Output
+    outputGood,
+    outputUnfortunate,
+    outputBad,
+    lineWrap,
+
+    -- * FilePath handling
     hsProjects,
     forProjects,
+
+    -- * Command line parsing
     getPluginCommand,
     pureSubCommand,
     PluginCommand(..),
+
+    -- * Utility
+    forWithKey_,
+    forWithKey,
 ) where
 
 import           Control.Applicative
 import           Control.Monad.IO.Class
+import           Data.Char
 import           Data.Functor
 import           Data.List
 import           Data.Map.Strict               (Map)
@@ -36,6 +48,40 @@ import           System.FilePath
 import           Data.ListTrie.Patricia.Map.Eq (TrieMap, deleteSuffixes,
                                                 fromList, lookupPrefix, toList)
 import           Data.Ord
+
+-- | The check went or is going well, this should make the developer happy
+outputGood :: MonadIO m => String -> m ()
+outputGood = outputWithIcon "  \x1b[32m[+]\x1b[0m "
+
+-- | A non-fatal warning of some sort. The developer should be able to ignore
+-- this.
+outputUnfortunate :: MonadIO m => String -> m ()
+outputUnfortunate = outputWithIcon "  \x1b[33m[*]\x1b[0m "
+
+-- | If any of these appear, you should probably be exploding and the developer
+-- will be sad.
+outputBad :: MonadIO m => String -> m ()
+outputBad = outputWithIcon "  \x1b[31m[-]\x1b[0m "
+
+outputWithIcon :: MonadIO m => String -> String -> m ()
+outputWithIcon icon = liftIO . putStrLn . (icon <>) . prependWS
+
+-- | Prepend some whitespace to every line but the first so that subsequent
+-- lines line up below a [+] or [-].
+prependWS :: String -> String
+prependWS "" = ""
+prependWS input =
+    let (x:xs) = lines input
+    in intercalate "\n" $ x : fmap ("      " <>) xs
+
+-- | Convenience for line wrapping long lines.
+lineWrap :: Int -> String -> String
+lineWrap line_len =
+    intercalate "\n" . fmap (intercalate "\n" . unfoldr f) . lines
+  where
+    f [] = Nothing
+    f xs = Just . fmap lstrip $ splitAt line_len xs
+    lstrip = dropWhile isSpace
 
 -- | Helper for traversing a Map with keys
 forWithKey_ :: Applicative f => Map k v -> (k -> v -> f ()) -> f ()
@@ -84,8 +130,6 @@ forProjects projs f = do
         x <- f fs
         liftIO $ setCurrentDirectory cwd
         return x
-
-
 
 -- | Given a predicate to identify a file as being in the "root" of a
 -- directory and a bunch of FilePaths, figure out which file paths belong under

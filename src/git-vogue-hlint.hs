@@ -58,8 +58,8 @@ main =
             let out = unlines errors <> "\n" <> ideas
 
             let ok = null ideas && null errors
-            unless ok (putStrLn out)
-            putStrLn $ "Checked " <> show (length hss) <> " file(s)"
+            unless ok (outputBad out)
+            outputGood $ "Checked " <> show (length hss) <> " file(s)"
             return ok
 
         unless (and rs) exitFailure
@@ -72,7 +72,7 @@ main =
                                      Error   -> True
 
     f CmdFix{} = do
-        putStrLn $ "There are outstanding hlint failures, you need to fix this "
+        outputBad $ "There are outstanding hlint failures, you need to fix this "
                 <> "manually and then re-run check"
         exitFailure
 -- | The default autoSettings form HLint3 does not handle custom HLint.hs files

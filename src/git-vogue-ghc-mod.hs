@@ -10,6 +10,7 @@
 -- | Description: Check with "cabal check".
 module Main where
 
+import           Control.Applicative
 import           Control.Monad
 import           Data.Char
 import           Data.Foldable
@@ -47,7 +48,7 @@ main =
         unless (and rs) exitFailure
 
     f CmdFix{} = do
-        putStrLn $ "There are outstanding ghc-mod failures, you need to fix this "
+        outputBad $ "There are outstanding ghc-mod failures, you need to fix this "
                 <> "manually and then re-run check"
         exitFailure
 
@@ -68,26 +69,24 @@ ghcModCheck :: [FilePath] -> IO Bool
 ghcModCheck files = do
     -- We can't actually check all at once, or ghc-mod gets confused, so we
     -- traverse
-    (r,_) <- runGhcModT defaultOptions (traverse (check . return) files)
+    (r,_) <- runGhcModT defaultOptions (traverse (check . pure) files)
 
     -- Seriously guys? Eithers within eithers?
     warn_errs <- case r of
             -- This is some kind of outer-error, we don't fail on it.
             Left e -> do
-                print e
+                outputUnfortunate . lineWrap 74 $ show e
                 return []
             -- And these are the warnings and errors.
             Right rs ->
                 return rs
 
-    -- Traverse the errors, picking the warnings out. We don't fail on errors
-    -- but do warn about them.
+    -- Traverse the errors, picking errors and warnings out
     maybe_ws <- for warn_errs $ \warn_err ->
         case warn_err of
             -- Errors in files
-            Left e -> do
-                putStrLn (explain e)
-                return Nothing
+            Left e ->
+                return . Just $ explain e
             -- Warnings, sometimes empty strings
             Right warn ->
                 return $ if null warn then Nothing else Just warn
@@ -95,8 +94,8 @@ ghcModCheck files = do
     let warns = catMaybes maybe_ws
     if null warns
         then do
-            putStrLn $ "Checked " <> show (length files)  <> " file(s)"
+            outputGood $ "Checked " <> show (length files)  <> " file(s)"
             return True
         else do
-            traverse_ putStrLn warns
+            traverse_ outputBad warns
             return False
