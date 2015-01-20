@@ -15,12 +15,14 @@ module Git.Vogue.PluginCommon
     forWithKey_,
     forWithKey,
     hsProjects,
+    forProjects,
     getPluginCommand,
     pureSubCommand,
     PluginCommand(..),
 ) where
 
 import           Control.Applicative
+import           Control.Monad.IO.Class
 import           Data.Functor
 import           Data.List
 import           Data.Map.Strict               (Map)
@@ -28,11 +30,12 @@ import qualified Data.Map.Strict               as M
 import           Data.Maybe
 import           Data.Monoid
 import           Options.Applicative
+import           System.Directory
+import           System.FilePath
 
 import           Data.ListTrie.Patricia.Map.Eq (TrieMap, deleteSuffixes,
                                                 fromList, lookupPrefix, toList)
 import           Data.Ord
-import           System.FilePath.Posix
 
 -- | Helper for traversing a Map with keys
 forWithKey_ :: Applicative f => Map k v -> (k -> v -> f ()) -> f ()
@@ -61,6 +64,26 @@ hsProjects check_fs all_fs =
     -- like a one level trie.
         bug = error "BUG: hsProjects: A key was not a prefix of its elements"
     in M.mapWithKey (\k -> fmap (fromMaybe bug . stripPrefix k)) proj_map
+
+-- | For the given projects, perform the supplied action on each given relative
+-- URLS and having set the current directory to the project.
+--
+-- This will also take care of printing out a "Checking project in: " message.
+forProjects
+    :: (MonadIO m, Applicative m)
+    => Map FilePath [FilePath]
+    -> ([FilePath] -> m a)
+    -> m (Map FilePath a)
+forProjects projs f = do
+    cwd <- liftIO $ getCurrentDirectory >>= canonicalizePath
+    forWithKey projs $ \dir fs -> do
+        let pdir = "." </> dir
+        liftIO $ do
+            putStrLn $ "Checking project in: " <> pdir
+            setCurrentDirectory pdir
+        x <- f fs
+        liftIO $ setCurrentDirectory cwd
+        return x
 
 
 

@@ -10,19 +10,17 @@
 -- | Description: Check with "cabal check".
 module Main where
 
+import           Control.Monad
 import           Data.Char
 import           Data.Foldable
-import           Data.Functor
-import           Data.List               hiding (notElem)
+import           Data.List               hiding (and, notElem)
 import           Data.Maybe
 import           Data.Monoid
 import           Data.Traversable
 import           Git.Vogue.PluginCommon
 import           Language.Haskell.GhcMod
-import           Prelude                 hiding (notElem)
-import           System.Directory
+import           Prelude                 hiding (and, notElem)
 import           System.Exit
-import           System.FilePath
 
 main :: IO ()
 main =
@@ -32,16 +30,11 @@ main =
   where
     f CmdName  = putStrLn "ghc-mod"
     f (CmdCheck check_fs all_fs) = do
-        cwd <- getCurrentDirectory  >>= canonicalizePath
         -- Have to change to the project directory for each ghc-mod run or it
         -- will be sad.
         --
         -- We run ghcModCheck in each, which will exit on the first failure.
-        forWithKey_ (hsProjects check_fs all_fs) $ \dir fs -> do
-            let pdir = "." </> dir
-            putStrLn $ "Checking " <> pdir
-            setCurrentDirectory pdir
-
+        rs <- forProjects (hsProjects check_fs all_fs) $ \fs ->
             -- HLint.hs is weird and more of a config file than a source file, so
             -- ghc-mod doesn't like it.
             --
@@ -50,10 +43,8 @@ main =
             ghcModCheck $ filter (\x ->    not ("HLint.hs" `isSuffixOf` x)
                                         && not ("Setup.hs" `isSuffixOf` x)
                                         && ".hs" `isSuffixOf` x) fs
-            setCurrentDirectory cwd
 
-        -- If we got this far, there were no failures, so success.
-        exitSuccess
+        unless (and rs) exitFailure
 
     f CmdFix{} = do
         putStrLn $ "There are outstanding ghc-mod failures, you need to fix this "
@@ -71,7 +62,9 @@ explain s
     | otherwise = s
 
 -- | ghc-mod check all of the given files from the current directory
-ghcModCheck :: [FilePath] -> IO ()
+--
+-- This will print out output, and return a bool representing success.
+ghcModCheck :: [FilePath] -> IO Bool
 ghcModCheck files = do
     -- We can't actually check all at once, or ghc-mod gets confused, so we
     -- traverse
@@ -101,8 +94,9 @@ ghcModCheck files = do
 
     let warns = catMaybes maybe_ws
     if null warns
-        then
+        then do
             putStrLn $ "Checked " <> show (length files)  <> " file(s)"
+            return True
         else do
             traverse_ putStrLn warns
-            exitFailure
+            return False
