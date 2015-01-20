@@ -15,15 +15,18 @@ module Main where
 
 import           Control.Applicative
 import           Data.Bifunctor
-import           Data.List
+import           Data.Foldable                       (concat)
+import           Data.List                           hiding (concat)
 import           Data.Monoid
 import           Data.Traversable
 import           Git.Vogue.PluginCommon
 import           Language.Haskell.Exts.SrcLoc
 import           Language.Haskell.HLint3
 import           Language.Preprocessor.Cpphs
+import           Prelude                             hiding (concat)
 import           System.Directory
 import           System.Exit
+import           System.FilePath
 
 #ifndef GPL_SCARES_ME
 import           Language.Haskell.HsColour.Colourise
@@ -37,41 +40,46 @@ main =
             "git-vogue-hlint - check for hlint problems"
   where
     f CmdName  = putStrLn "hlint"
-    f (CmdCheck fs _) = lint $ filter (isSuffixOf ".hs") fs
+    f (CmdCheck check_fs all_fs) = do
+        cwd <- getCurrentDirectory  >>= canonicalizePath
+        -- Traverse the files, parsing and processing as we go for efficiency
+        rs <- forWithKey (hsProjects check_fs all_fs) $ \dir fs -> do
+            let hss = filter (isSuffixOf ".hs") fs
+            let pdir = "." </> dir
+            putStrLn $ "Checking " <> pdir
+                     <> " (" <> show (length hss) <> " files)"
+            setCurrentDirectory pdir
+
+            (flags, classify, hint) <- autoSettings'
+            -- Cpphs is off by default
+            let flags' = flags { cppFlags = Cpphs defaultCpphsOptions }
+
+
+            x <- for hss $ \file ->
+                process classify hint <$> parseModuleEx flags' file Nothing
+            setCurrentDirectory cwd
+            return x
+
+        let parsed = concat rs
+        let ideas = concat [ x | Right x <- parsed ]
+        let errors = [ x | Left x <- parsed ]
+        let out = unlines errors <> "\n" <> ideas
+
+        if null ideas && null errors
+        then exitSuccess
+        else putStrLn out >> exitFailure
+      where
+        process classify hint =
+            bimap (\x -> parseErrorMessage x <> show (parseErrorLocation x))
+                  (\x -> showANSI . filter g $ applyHints classify hint [x])
+        g x = case ideaSeverity x of Ignore  -> False
+                                     Warning -> True
+                                     Error   -> True
+
     f CmdFix{} = do
         putStrLn $ "There are outstanding hlint failures, you need to fix this "
                 <> "manually and then re-run check"
         exitFailure
-
--- | Lint all of given files
-lint ::  [FilePath] -> IO ()
-lint files = do
-    (flags, classify, hint) <- autoSettings'
-
-    -- Cpphs is off by default
-    let flags' = flags { cppFlags = Cpphs defaultCpphsOptions }
-
-    -- Traverse the files, parsing and processing as we go for efficiency
-    parsed <- for files $ \f ->
-                process classify hint <$> parseModuleEx flags' f Nothing
-
-
-    let ideas = concat [ x | Right x <- parsed]
-    let errors = [  x | Left x <- parsed ]
-    let out = unlines errors <> "\n" <> ideas
-
-    if null ideas && null errors
-      then do
-        putStrLn ("Checked " <> show (length files) <> " file(s)")
-        exitSuccess
-      else putStrLn out >> exitFailure
-  where
-    process classify hint =
-        bimap f g
-      where
-        f x = parseErrorMessage x <> show (parseErrorLocation x)
-        g x = showANSI $ applyHints classify hint [x]
-
 -- | The default autoSettings form HLint3 does not handle custom HLint.hs files
 -- in the current directory. So we define our own.
 autoSettings' :: IO (ParseFlags, [Classify], Hint)
