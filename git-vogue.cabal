@@ -37,7 +37,6 @@ library
                      , filepath
                      , process
                      , containers
-                     , list-tries
                      , formatting
                      , split
                      , text
