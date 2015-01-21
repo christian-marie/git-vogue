@@ -1,5 +1,5 @@
 name:                git-vogue
-version:             0.1.0.4
+version:             0.2.0.0
 synopsis:            A framework for pre-commit checks.
 description:         Make your Haskell git repositories fashionable.
 homepage:            https://github.com/anchor/git-vogue
@@ -24,6 +24,7 @@ flag gpl
 
 library
   default-language:    Haskell2010
+  Extra-Source-Files:  changelog.txt
   hs-source-dirs:      lib
   exposed-modules:     Git.Vogue
                        Git.Vogue.Types
@@ -36,7 +37,6 @@ library
                      , filepath
                      , process
                      , containers
-                     , list-tries
                      , formatting
                      , split
                      , text

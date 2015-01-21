@@ -20,15 +20,16 @@
 module Git.Vogue where
 
 import           Control.Applicative
+import           Control.Monad
 import           Control.Monad.IO.Class
 import           Data.Foldable
 import           Data.Maybe
 import           Data.Text.Lazy         (Text)
-import qualified Data.Text.Lazy         as T
 import qualified Data.Text.Lazy.IO      as T
 import           Data.Traversable       hiding (sequence)
 import           Formatting
 import           Prelude                hiding (elem, maximum)
+import           System.Directory
 import           System.Exit
 
 import           Git.Vogue.Types
@@ -43,7 +44,9 @@ runCommand
     -> m ()
 runCommand cmd search_mode VCS{..} PluginDiscoverer{..} = go cmd
   where
+    cd = getTopLevel >>= liftIO . setCurrentDirectory
     go CmdInit = do
+        cd
         already_there <- checkHook
         if already_there
             then success "Pre-commit hook is already installed"
@@ -55,6 +58,7 @@ runCommand cmd search_mode VCS{..} PluginDiscoverer{..} = go cmd
                     else failure "Hook failed to install"
 
     go CmdVerify = do
+        cd
         installed <- checkHook
         if installed
             then success "Pre-commit hook currently installed"
@@ -91,67 +95,72 @@ runCommand cmd search_mode VCS{..} PluginDiscoverer{..} = go cmd
                 failure "Unknown plugin"
 
     go CmdRunCheck = do
-        (check_fs, all_fs) <- (,) <$> getFiles search_mode <*> getFiles FindAll
-        plugins <- filter enabled <$> discoverPlugins
-        for plugins (\p@Plugin{..} -> (p,) <$> runCheck check_fs all_fs)
-            >>= outputStatusAndExit
+        (check_fs, all_fs, plugins) <- things
+        rs <- for plugins $ \p -> do
+            r <- runCheck p check_fs all_fs
+            liftIO . T.putStrLn $ colorize p r
+            return r
+        exitWithWorst rs
+
 
     go CmdRunFix = do
-        (check_fs, all_fs) <- (,) <$> getFiles search_mode <*> getFiles FindAll
-        plugins <- filter enabled <$> discoverPlugins
-        rs <- for plugins $ \p@Plugin{..} -> do
-            r <- runCheck check_fs all_fs
+        cd
+        (check_fs, all_fs, plugins) <- things
+        rs <- for plugins $ \p -> do
+            r <- runCheck p check_fs all_fs
             case r of
                 Failure{} -> do
-                    r' <- runFix check_fs all_fs
-                    return $ Just (p, r')
+                    r' <- runFix p check_fs all_fs
+                    liftIO . T.putStrLn $ colorize p r'
+                    return $ Just r'
                 _  -> return Nothing
 
-        outputStatusAndExit (catMaybes rs)
+        exitWithWorst (catMaybes rs)
+
+    things = do
+        check_fs <- getFiles search_mode
+        when (null check_fs) (success "Vacuous success - Nothing to check")
+
+        plugins <- filter enabled <$> discoverPlugins
+        when (null check_fs) (success "Vacuous success - No plugins enabled")
+
+        all_fs <- getFiles FindAll
+        return (check_fs, all_fs, plugins)
 
 success, failure :: MonadIO m => Text -> m a
 success msg = liftIO (T.putStrLn msg >> exitSuccess)
 failure msg = liftIO (T.putStrLn msg >> exitFailure)
 
 -- | Output the results of a run and exit with an appropriate return code
-outputStatusAndExit
+exitWithWorst
     :: MonadIO m
-    => [(Plugin z, Result)]
+    => [Result]
     -> m ()
-outputStatusAndExit rs = liftIO $
-    case worst rs of
-        Success output -> do
-            T.putStrLn output
-            exitSuccess
-        Failure output -> do
-            T.putStrLn output
-            exitWith $ ExitFailure 1
-        Catastrophe _ output -> do
-            T.putStrLn output
-            exitWith $ ExitFailure 2
-  where
-    worst [] = Success "Vacuous success"
-    worst xs =
-        let txt = T.unlines $ fmap (uncurry colorize) xs
-        in case maximum (fmap snd rs) of
-            Success{} -> Success txt
-            Failure{} -> Failure txt
-            Catastrophe{} -> Catastrophe 0 txt
+exitWithWorst [] = liftIO exitSuccess
+exitWithWorst rs = liftIO $
+    case maximum rs of
+        Success{}     -> exitSuccess
+        Failure{}     -> exitWith $ ExitFailure 1
+        Catastrophe{} -> exitWith $ ExitFailure 2
 
-    colorize Plugin{..} (Success txt) =
-        format ("\x1b[32m"
-               % text
-               % " succeeded\x1b[0m with:\n"
-               % text) (unPluginName pluginName) txt
-    colorize Plugin{..} (Failure txt) =
-        format ("\x1b[33m"
-               % text
-               % " failed\x1b[0m with:\n"
-               % text) (unPluginName pluginName) txt
-    colorize Plugin{..} (Catastrophe txt ret) =
-        format ("\x1b[31m"
+colorize
+    :: Plugin a
+    -> Result
+    -> Text
+colorize Plugin{..} (Success txt) =
+    format ("\x1b[32m"
             % text
-            % " exploded \x1b[0m with exit code "
-            % int
-            %":\n"
-            % text) (unPluginName pluginName) txt ret
+            % " succeeded\x1b[0m with:\n"
+            % text) (unPluginName pluginName) txt
+colorize Plugin{..} (Failure txt) =
+    format ("\x1b[31m"
+            % text
+            % " failed\x1b[0m with:\n"
+            % text) (unPluginName pluginName) txt
+colorize Plugin{..} (Catastrophe txt ret) =
+    format ("\x1b[31m"
+        % text
+        % " exploded \x1b[0m with exit code "
+        % int
+        %":\n"
+        % text) (unPluginName pluginName) txt ret

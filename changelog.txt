@@ -1,0 +1,12 @@
+2015-01-21 v0.2.0.0 Christian Marie <christian@ponies.io>
+	* plugins: All plugins now support multiple repositories
+	* plugins: Output is formatted and streamed as it is generated
+	* git-vogue: Provide interface for plugin enabling/disabling
+	* git-vogue: Modular VCS architecture introduced
+	* git-vogue: Allow checking of a single file via git-vogue check file
+
+2015-01-05 v0.1.0.4 Christian Marie <christian@ponies.io>
+	* plugins: Allow disabling of plugins via git config
+
+2015-01-05 v0.1.0.3 Christian Marie <christian@ponies.io>
+	* Initial public release

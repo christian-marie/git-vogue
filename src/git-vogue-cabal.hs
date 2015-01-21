@@ -11,9 +11,9 @@
 module Main where
 
 import           Control.Monad                                 (unless, when)
-import qualified Data.Map                                      as M
+import           Data.Foldable
+import           Data.List                                     hiding (and)
 import           Data.Monoid
-import           Data.Traversable
 import           Distribution.PackageDescription.Check
 import           Distribution.PackageDescription.Configuration (flattenPackageDescription)
 import           Distribution.PackageDescription.Parse         (readPackageDescription)
@@ -22,9 +22,9 @@ import           Distribution.Simple.Utils                     (defaultPackageDe
                                                                 wrapText)
 import           Distribution.Verbosity                        (silent)
 import           Git.Vogue.PluginCommon
-import           System.Directory
+import           Prelude                                       hiding (and,
+                                                                mapM_)
 import           System.Exit
-import           System.FilePath
 
 main :: IO ()
 main = f =<< getPluginCommand
@@ -35,18 +35,11 @@ main = f =<< getPluginCommand
 
     f (CmdCheck check_fs all_fs) = do
         -- Grab all the projects dirs we want to traverse through
-        let projects = fmap ("." </>) . M.keys $  hsProjects check_fs all_fs
-        cwd <- getCurrentDirectory >>= canonicalizePath
-        rs <- for projects $ \dir -> do
-            setCurrentDirectory cwd
-            putStrLn $ "Checking " <> dir
-            setCurrentDirectory dir
-            check
-
+        rs <- forProjects (hsProjects check_fs all_fs) (const check)
         unless (and rs) exitFailure
 
     f CmdFix{} = do
-        putStrLn $ "There are outstanding cabal failures, you need to fix this "
+        outputBad $ "There are outstanding cabal failures, you need to fix this "
                 <> "manually and then re-run check"
         exitFailure
 
@@ -58,31 +51,35 @@ check = do
     ppd <- readPackageDescription silent pdfile
     let pkg_desc = flattenPackageDescription ppd
     ioChecks <- checkPackageFiles pkg_desc "."
-    let packageChecks = ioChecks <> checkPackage ppd (Just pkg_desc)
+    let packageChecks = filter goodCheck $ ioChecks <> checkPackage ppd (Just pkg_desc)
         buildImpossible = [ x | x@PackageBuildImpossible {} <- packageChecks ]
         buildWarning    = [ x | x@PackageBuildWarning {}    <- packageChecks ]
-        distSuspicious  = [ x | x@PackageDistSuspicious {}  <- packageChecks ]
+        distSuspicious  = [ x | x@PackageDistSuspicious{}   <- packageChecks ]
         distInexusable  = [ x | x@PackageDistInexcusable {} <- packageChecks ]
     unless (null buildImpossible) $ do
-        putStrLn "The package will not build sanely due to these errors:"
+        outputBad "The package will not build sanely due to these errors:"
         printCheckMessages buildImpossible
     unless (null buildWarning) $ do
-        putStrLn "The following warnings are likely affect your build negatively:"
+        outputBad "The following warnings are likely affect your build negatively:"
         printCheckMessages buildWarning
     unless (null distSuspicious) $ do
-        putStrLn "These warnings may cause trouble when distributing the package:"
+        outputBad "These warnings may cause trouble when distributing the package:"
         printCheckMessages distSuspicious
     unless (null distInexusable) $ do
-        putStrLn "The following errors will cause portability problems on other environments:"
+        outputBad "The following errors will cause portability problems on other environments:"
         printCheckMessages distInexusable
     let isDistError (PackageDistSuspicious {}) = False
         isDistError _                          = True
         errors = filter isDistError packageChecks
     unless (null errors) $
-        putStrLn "Hackage would reject this package."
+        outputBad "Hackage would reject this package."
     when (null packageChecks) $
-        putStrLn "Checked cabal file"
+        outputGood "Checked cabal file"
     return (null packageChecks)
   where
-    printCheckMessages = mapM_ (putStrLn . format . explanation)
+    goodCheck (PackageDistSuspicious msg) =
+        not $ "ghc-options: -O2" `isInfixOf` msg
+    goodCheck _ = True
+
+    printCheckMessages = mapM_ (outputBad . format . explanation)
     format = toUTF8 . wrapText . ("* "++)

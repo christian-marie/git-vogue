@@ -45,8 +45,8 @@ main = do
 
                 let nested = ["a.cabal", "a.hs", "b/b.cabal", "b/b.hs"]
                 join hsProjects nested `shouldBe`
-                    fromList [ ("",  ["a.cabal","a.hs"    ])
-                             , ("b/",["b/b.hs","b/b.cabal"])]
+                    fromList [ ("",["a.cabal","a.hs"])
+                             , ("b/",["b.cabal", "b.hs"]) ]
 
 testLEDiscovery :: FilePath -> PluginDiscoverer IO -> Spec
 testLEDiscovery fixtures PluginDiscoverer{..} = do
@@ -113,6 +113,9 @@ testGitVCS VCS{..} = do
             getFiles FindChanged >>= (`shouldBe` [])
             getFiles FindAll     >>= (`shouldBe` ["hi"])
 
+        it "should list root dir correctly" . withGitRepo' $ \dir ->
+            getTopLevel >>= (`shouldBe` dir)
+
 -- | Copy a dir and continue along
 withCopy :: FilePath
          -> FilePath
@@ -123,19 +126,24 @@ withCopy src dst f = do
     void $ rawSystem "cp" ["-r", src,  dst]
     f
 
+withGitRepo
+    :: IO ()
+    -> IO ()
+withGitRepo = withGitRepo' . const
+
 -- | Create a git repository and run an action with it, after changing to that
 -- directory.
 --
 -- Restores current dir on completion
-withGitRepo
-    :: IO ()
+withGitRepo'
+    :: (String -> IO ())
     -> IO ()
-withGitRepo f =
+withGitRepo' f =
     withSystemTempDirectory "git-setup-test." $ \temp_dir -> do
         -- For some unknown reason, setting the current directory appears to do
         -- strange things with a bracket, so we don't bracket.
         before_dir <- getCurrentDirectory
         void $ git ["init", temp_dir]
         setCurrentDirectory temp_dir
-        f
+        f temp_dir
         setCurrentDirectory before_dir

@@ -11,21 +11,17 @@
 module Main where
 
 import           Control.Applicative
+import           Control.Monad
 import           Data.Char
 import           Data.Foldable
-import           Data.Functor
-import           Data.List               hiding (notElem)
-import           Data.Map                (Map)
-import qualified Data.Map                as M
+import           Data.List               hiding (and, notElem)
 import           Data.Maybe
 import           Data.Monoid
 import           Data.Traversable
 import           Git.Vogue.PluginCommon
 import           Language.Haskell.GhcMod
-import           Prelude                 hiding (notElem)
-import           System.Directory
+import           Prelude                 hiding (and, notElem)
 import           System.Exit
-import           System.FilePath
 
 main :: IO ()
 main =
@@ -33,18 +29,13 @@ main =
             "Check your Haskell project for ghc-mod problems."
             "git-vogue-ghc-mod - check for ghc-mod problems"
   where
-    forWithKey_ :: Applicative f => Map k v -> (k -> v -> f ()) -> f ()
-    forWithKey_ m a = void $ M.traverseWithKey a m
     f CmdName  = putStrLn "ghc-mod"
     f (CmdCheck check_fs all_fs) = do
-        cwd <- getCurrentDirectory  >>= canonicalizePath
         -- Have to change to the project directory for each ghc-mod run or it
         -- will be sad.
-        forWithKey_ (hsProjects check_fs all_fs) $ \dir fs -> do
-            let pdir = "." </> dir
-            putStrLn $ "Checking " <> pdir
-            setCurrentDirectory pdir
-
+        --
+        -- We run ghcModCheck in each, which will exit on the first failure.
+        rs <- forProjects (hsProjects check_fs all_fs) $ \fs ->
             -- HLint.hs is weird and more of a config file than a source file, so
             -- ghc-mod doesn't like it.
             --
@@ -53,9 +44,11 @@ main =
             ghcModCheck $ filter (\x ->    not ("HLint.hs" `isSuffixOf` x)
                                         && not ("Setup.hs" `isSuffixOf` x)
                                         && ".hs" `isSuffixOf` x) fs
-            setCurrentDirectory cwd
+
+        unless (and rs) exitFailure
+
     f CmdFix{} = do
-        putStrLn $ "There are outstanding ghc-mod failures, you need to fix this "
+        outputBad $ "There are outstanding ghc-mod failures, you need to fix this "
                 <> "manually and then re-run check"
         exitFailure
 
@@ -70,30 +63,30 @@ explain s
     | otherwise = s
 
 -- | ghc-mod check all of the given files from the current directory
-ghcModCheck :: [FilePath] -> IO ()
+--
+-- This will print out output, and return a bool representing success.
+ghcModCheck :: [FilePath] -> IO Bool
 ghcModCheck files = do
     -- We can't actually check all at once, or ghc-mod gets confused, so we
     -- traverse
-    (r,_) <- runGhcModT defaultOptions (traverse (check . return) files)
+    (r,_) <- runGhcModT defaultOptions (traverse (check . pure) files)
 
     -- Seriously guys? Eithers within eithers?
     warn_errs <- case r of
             -- This is some kind of outer-error, we don't fail on it.
             Left e -> do
-                print e
+                outputUnfortunate . lineWrap 74 $ show e
                 return []
             -- And these are the warnings and errors.
             Right rs ->
                 return rs
 
-    -- Traverse the errors, picking the warnings out. We don't fail on errors
-    -- but do warn about them.
+    -- Traverse the errors, picking errors and warnings out
     maybe_ws <- for warn_errs $ \warn_err ->
         case warn_err of
             -- Errors in files
-            Left e -> do
-                putStrLn (explain e)
-                return Nothing
+            Left e ->
+                return . Just $ explain e
             -- Warnings, sometimes empty strings
             Right warn ->
                 return $ if null warn then Nothing else Just warn
@@ -101,8 +94,8 @@ ghcModCheck files = do
     let warns = catMaybes maybe_ws
     if null warns
         then do
-            putStrLn $ "Checked " <> show (length files)  <> " file(s)"
-            exitSuccess
+            outputGood $ "Checked " <> show (length files)  <> " file(s)"
+            return True
         else do
-            traverse_ putStrLn warns
-            exitFailure
+            traverse_ outputBad warns
+            return False
