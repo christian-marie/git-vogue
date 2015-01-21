@@ -37,17 +37,14 @@ import           Control.Monad.IO.Class
 import           Data.Char
 import           Data.Functor
 import           Data.List
-import           Data.Map.Strict               (Map)
-import qualified Data.Map.Strict               as M
+import           Data.Map.Strict        (Map)
+import qualified Data.Map.Strict        as M
 import           Data.Maybe
 import           Data.Monoid
+import           Data.Ord
 import           Options.Applicative
 import           System.Directory
 import           System.FilePath
-
-import           Data.ListTrie.Patricia.Map.Eq (TrieMap, deleteSuffixes,
-                                                fromList, lookupPrefix, toList)
-import           Data.Ord
 
 -- | The check went or is going well, this should make the developer happy
 outputGood :: MonadIO m => String -> m ()
@@ -143,38 +140,29 @@ findProjects
     -> [FilePath]
     -> (Map FilePath [FilePath], [FilePath])
 findProjects p xs =
-        -- We start out by putting all of the files in a trie.
-        --
-        -- Note that we tack on a / for everything so that they share a common
-        -- root node.
-    let all_trie = unFlatten (fmap (splitPath . ('/':)) xs)
+        -- We start out by putting all of the files in a nested list, splitting
+        -- up the path.
+    let all_paths = fmap (splitPath . ('/':)) xs
 
         -- Now we find all of the project roots. Again tacking on the root so
         -- that init is safe and everything lines up.
         roots = sortBy (comparing length) . fmap (init . splitPath . ('/':)) $
                     filter p xs
 
-        -- Now iterate over the project roots, taking the chunks of the tree
-        -- out that belong under that as we go. It's simpler than it looks.
-        f x (rs, t) =
-            (M.insertWith (<>)
-                          (joinPath  $ tail x)
-                          ((fmap (joinPath . tail) . flatten) (lookupPrefix x t))
-                          rs
-            , deleteSuffixes x t)
-        (projects,remainder) = foldr f (mempty, all_trie) roots
+        -- Now iterate over the project roots, taking the bits of the whole
+        -- list as we go.
+        f current_root (result, remaining) =
+            let included = isPrefixOf current_root
+                to_take  = filter included remaining
+                to_leave = filter (not . included) remaining
+            in ( M.insert (joinPath $ tail current_root) to_take result
+               , to_leave)
+
+        (projects, remainder) = foldr f (mempty, all_paths) roots
 
     -- Now put the broken up paths back together and take the roots off.
-    in (projects
-       ,fmap (joinPath . tail) . flatten $ remainder)
-  where
-    -- Stuff a list of keys into a trie with dummy values.
-    unFlatten :: Eq k => [[k]] -> TrieMap k ()
-    unFlatten = fromList . fmap (,())
-
-    -- Extract a list of keys from a trie, throwing away the values.
-    flatten :: Eq k => TrieMap k a -> [[k]]
-    flatten = fmap fst . toList
+    in ((fmap . fmap) (joinPath . tail) projects
+       , fmap (joinPath . tail) remainder)
 
 -- | Parser for plugin arguments
 pluginCommandParser :: Parser PluginCommand
