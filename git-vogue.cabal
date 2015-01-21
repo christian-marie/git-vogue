@@ -24,6 +24,7 @@ flag gpl
 
 library
   default-language:    Haskell2010
+  Extra-Source-Files:  changelog.txt
   hs-source-dirs:      lib
   exposed-modules:     Git.Vogue
                        Git.Vogue.Types
