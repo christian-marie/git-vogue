@@ -1,3 +1,6 @@
+2015-01-30 v0.2.0.1 Christian Marie <christian@ponies.io>
+	* dependencies: Drop list-tries dependency
+
 2015-01-21 v0.2.0.0 Christian Marie <christian@ponies.io>
 	* plugins: All plugins now support multiple repositories
 	* plugins: Output is formatted and streamed as it is generated
