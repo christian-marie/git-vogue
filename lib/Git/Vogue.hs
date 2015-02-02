@@ -104,7 +104,6 @@ runCommand cmd search_mode VCS{..} PluginDiscoverer{..} = go cmd
 
 
     go CmdRunFix = do
-        cd
         (check_fs, all_fs, plugins) <- things
         rs <- for plugins $ \p -> do
             r <- runCheck p check_fs all_fs
@@ -118,6 +117,7 @@ runCommand cmd search_mode VCS{..} PluginDiscoverer{..} = go cmd
         exitWithWorst (catMaybes rs)
 
     things = do
+        cd
         check_fs <- getFiles search_mode
         when (null check_fs) (success "Vacuous success - Nothing to check")
 
