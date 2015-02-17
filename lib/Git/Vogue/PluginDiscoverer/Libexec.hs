@@ -56,10 +56,21 @@ discover
     => FilePath
     -> m [Plugin m]
 discover libexec_dir = do
+    let libexec_plugins = libexec_dir </> "git-vogue"
+
+    -- Check if libexec dir does not exist, and notify user that this may be
+    -- caused by cabal being dumb.
+    is_dir <- liftIO $ doesDirectoryExist libexec_plugins
+    unless is_dir . liftIO .
+        putStrLn $ "Could not find libexec plugins: " <> libexec_plugins
+                 <> "\nThis could be caused by installing with a buggy cabal, \
+                    \see:\n\thttps://github.com/anchor/git-vogue/issues/80"
+
     -- Use the environmental variable and $libexec/git-vogue/ directories as
     -- the search path.
     path <- fromMaybe "" <$> liftIO (lookupEnv "GIT_VOGUE_PATH")
-    let directories = splitOn ":" path <> [libexec_dir </> "git-vogue"]
+
+    let directories = splitOn ":" path <> [libexec_plugins]
 
     -- Disable plugins by the name that they present, so that the user does not
     -- need to know how the backend works.
