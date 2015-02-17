@@ -60,6 +60,8 @@ explain s
         s <> "\n\tSuggestion: cabal configure --enable-tests\n"
     | "bench" `isInfixOf` fmap toLower s && "hidden package" `isInfixOf` s =
         s <> "\n\tSuggestion: cabal configure --enable-benchmarks\n"
+    | "hGetContents: invalid argument" `isInfixOf` s =
+        s <> "\n\tSuggestion: use cabal < 1.22\n"
     | otherwise = s
 
 -- | ghc-mod check all of the given files from the current directory
