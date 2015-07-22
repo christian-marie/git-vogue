@@ -1,0 +1,7 @@
+flags:
+  git-vogue:
+    gpl: true
+packages:
+- '.'
+extra-deps: []
+resolver: lts-2.18
