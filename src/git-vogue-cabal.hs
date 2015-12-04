@@ -68,8 +68,8 @@ check = do
     unless (null distInexusable) $ do
         outputBad "The following errors will cause portability problems on other environments:"
         printCheckMessages distInexusable
-    let isDistError (PackageDistSuspicious {}) = False
-        isDistError _                          = True
+    let isDistError PackageDistSuspicious {} = False
+        isDistError _                        = True
         errors = filter isDistError packageChecks
     unless (null errors) $
         outputBad "Hackage would reject this package."
