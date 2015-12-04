@@ -2,11 +2,11 @@ name:                git-vogue
 version:             0.2.1.0
 synopsis:            A framework for pre-commit checks.
 description:         Make your Haskell git repositories fashionable.
-homepage:            https://github.com/anchor/git-vogue
+homepage:            https://github.com/oswynb/git-vogue
 license:             BSD3
 license-file:        LICENSE
 author:              Anchor Engineering <engineering@anchor.com.au>
-maintainer:          Anchor Engineering <engineering@anchor.com.au>
+maintainer:          Oswyn Brent <oztastic703@gmail.com>
 copyright:           (c) 2015 Anchor Systems, Pty Ltd and Others
 category:            Development
 build-type:          Custom
@@ -16,7 +16,7 @@ data-files:          templates/pre-commit
 
 source-repository HEAD
   type: git
-  location: https://github.com/anchor/git-vogue
+  location: https://github.com/oswynb/git-vogue
 
 flag gpl
     default: True
