@@ -14,13 +14,14 @@ import           Control.Applicative
 import           Control.Monad
 import           Data.Char
 import           Data.Foldable
-import           Data.List               hiding (and, notElem)
+import           Data.List                     hiding (and, notElem)
 import           Data.Maybe
 import           Data.Monoid
 import           Data.Traversable
 import           Git.Vogue.PluginCommon
 import           Language.Haskell.GhcMod
-import           Prelude                 hiding (and, notElem)
+import           Language.Haskell.GhcMod.Monad
+import           Prelude                       hiding (and, notElem)
 import           System.Exit
 
 main :: IO ()
@@ -71,7 +72,7 @@ ghcModCheck :: [FilePath] -> IO Bool
 ghcModCheck files = do
     -- We can't actually check all at once, or ghc-mod gets confused, so we
     -- traverse
-    (r,_) <- runGhcModT defaultOptions (traverse (check . pure) files)
+    (r,_) <- runGmOutT defaultOptions $ runGhcModT defaultOptions (traverse (check . pure) files)
 
     -- Seriously guys? Eithers within eithers?
     warn_errs <- case r of

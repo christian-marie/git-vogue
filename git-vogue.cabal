@@ -1,5 +1,5 @@
 name:                git-vogue
-version:             0.2.0.1
+version:             0.2.1.0
 synopsis:            A framework for pre-commit checks.
 description:         Make your Haskell git repositories fashionable.
 homepage:            https://github.com/anchor/git-vogue
@@ -90,7 +90,7 @@ executable git-vogue-ghc-mod
   hs-source-dirs:      src
   main-is:             git-vogue-ghc-mod.hs
   build-depends:       base
-                     , ghc-mod         >= 5.2    && < 5.3
+                     , ghc-mod         >= 5.2    && < 5.5
                      , git-vogue
 
 test-suite unit
