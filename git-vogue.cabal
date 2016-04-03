@@ -90,7 +90,7 @@ executable git-vogue-ghc-mod
   hs-source-dirs:      src
   main-is:             git-vogue-ghc-mod.hs
   build-depends:       base
-                     , ghc-mod         >= 5.2    && < 5.5
+                     , ghc-mod         >= 5.2    && < 5.6
                      , git-vogue
 
 test-suite unit
