@@ -106,5 +106,5 @@ test-suite unit
                      , hspec
                      , process
                      , temporary
-
+  build-tools:         git
 -- vim: set tabstop=21 expandtab:
