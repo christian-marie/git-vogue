@@ -67,9 +67,10 @@ main =
         process classify hint =
             bimap (\x -> parseErrorMessage x <> show (parseErrorLocation x))
                   (\x -> showANSI . filter g $ applyHints classify hint [x])
-        g x = case ideaSeverity x of Ignore  -> False
-                                     Warning -> True
-                                     Error   -> True
+        g x = case ideaSeverity x of Ignore     -> False
+                                     Suggestion -> True
+                                     Warning    -> True
+                                     Error      -> True
 
     f CmdFix{} = do
         outputBad $ "There are outstanding hlint failures, you need to fix this "
