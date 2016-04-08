@@ -62,7 +62,9 @@ getConfig
 getConfig =
     -- Don't spew every file checked to stdout
     let v = makeVerbose False
-    in configFilePath v Nothing >>= loadConfig v
+    in do
+       config <- configFilePath v Nothing
+       loadConfig v (Just config)
 
 -- | Checks whether running Stylish over a given file produces any differences.
 -- Returns TRUE if there's nothing left to change.
