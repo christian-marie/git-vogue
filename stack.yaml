@@ -3,7 +3,5 @@ flags:
     gpl: true
 packages:
 - '.'
-extra-deps: [ cabal-helper-0.6.2.0
-            , ghc-mod-5.4.0.0
-            ]
-resolver: lts-3.16
+extra-deps: []
+resolver: lts-5.11
