@@ -70,7 +70,7 @@ executable git-vogue-hlint
                      , directory
                      , git-vogue
                      , haskell-src-exts
-                     , hlint           >= 1.9.13 && < 1.10
+                     , hlint           >= 1.9.27 && < 1.10
                      , hscolour
   if !flag(gpl)
         cpp-options: -DGPL_SCARES_ME
