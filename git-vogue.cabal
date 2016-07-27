@@ -28,6 +28,7 @@ library
   exposed-modules:     Git.Vogue
                        Git.Vogue.Types
                        Git.Vogue.VCS.Git
+                       Git.Vogue.VCS.Null
                        Git.Vogue.PluginDiscoverer.Libexec
                        Git.Vogue.PluginCommon
   other-modules:       Paths_git_vogue
