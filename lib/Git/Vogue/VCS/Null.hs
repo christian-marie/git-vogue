@@ -40,7 +40,10 @@ nullGetTopLevel :: MonadIO m => m FilePath
 nullGetTopLevel = liftIO getCurrentDirectory
 
 getAllFiles :: IO [FilePath]
-getAllFiles = getCurrentDirectory >>= go
+getAllFiles = do
+    currentDirectory <- getCurrentDirectory
+    fs <- go currentDirectory
+    pure (makeRelative currentDirectory <$> fs)
   where
     go dir = do
       (dirs, files) <- getFilesAndDirectories dir
