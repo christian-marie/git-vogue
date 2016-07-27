@@ -24,6 +24,7 @@ import qualified Data.Text.Lazy as T
 data VogueOptions = Options
     { optSearch  :: SearchMode
     , optCommand :: VogueCommand
+    , optDisable :: [PluginName]
     }
   deriving (Eq, Show)
 
