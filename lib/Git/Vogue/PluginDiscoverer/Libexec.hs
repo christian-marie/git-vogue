@@ -26,6 +26,7 @@ import           Data.String
 import           Data.Text.Lazy         (Text)
 import qualified Data.Text.Lazy         as T
 import           Data.Traversable
+import           Extra                  (withTempFile)
 import           System.Directory
 import           System.Environment
 import           System.Exit
@@ -133,9 +134,13 @@ runPlugin
     -> [FilePath]
     -> m Result
 runPlugin plugin cmd check_fs all_fs = liftIO $ do
-    (status, out, err) <- readProcessWithExitCode plugin [ cmd
-                                                         , unlines check_fs
-                                                         , unlines all_fs] ""
+    (status, out, err) <- withTempFile (\checkFileListPath ->
+        withTempFile (\allFileListPath -> do
+          writeFile checkFileListPath (show check_fs)
+          writeFile allFileListPath (show all_fs)
+          readProcessWithExitCode plugin [cmd, checkFileListPath, allFileListPath] ""
+        )
+      )
     let glommed = fromString $ out <> err
     return $ case status of
         ExitSuccess   -> Success glommed

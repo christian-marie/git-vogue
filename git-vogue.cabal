@@ -34,6 +34,7 @@ library
   build-depends:       base >=4.6 && <5
                      , containers
                      , directory
+                     , extra >= 1.4 && < 1.6
                      , filepath
                      , formatting
                      , optparse-applicative >= 0.11

@@ -31,7 +31,9 @@ main =
             "git-vogue-ghc-mod - check for ghc-mod problems"
   where
     f CmdName  = putStrLn "ghc-mod"
-    f (CmdCheck check_fs all_fs) = do
+    f (CmdCheck check_fs_list all_fs_list) = do
+        check_fs <- read <$> readFile check_fs_list
+        all_fs <- read <$> readFile all_fs_list
         -- Have to change to the project directory for each ghc-mod run or it
         -- will be sad.
         --

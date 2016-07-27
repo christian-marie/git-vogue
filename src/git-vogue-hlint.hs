@@ -40,7 +40,9 @@ main =
             "git-vogue-hlint - check for hlint problems"
   where
     f CmdName  = putStrLn "hlint"
-    f (CmdCheck check_fs all_fs) = do
+    f (CmdCheck check_fs_list all_fs_list) = do
+        check_fs <- read <$> readFile check_fs_list
+        all_fs <- read <$> readFile all_fs_list
         -- Traverse the files, parsing and processing as we go for efficiency
         rs <- forProjects (hsProjects check_fs all_fs) $ \fs -> do
             let hss = filter (isSuffixOf ".hs") fs
