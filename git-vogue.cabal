@@ -83,7 +83,7 @@ executable git-vogue-stylish
                      , Diff
                      , git-vogue
                      , strict
-                     , stylish-haskell >= 0.5.16 && < 0.6
+                     , stylish-haskell >= 0.5.16 && < 0.7
 
 executable git-vogue-ghc-mod
   default-language:    Haskell2010
