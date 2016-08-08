@@ -39,10 +39,13 @@ runCommand
     :: forall m. (Applicative m, MonadIO m, Functor m)
     => VogueCommand
     -> SearchMode
+    -> [PluginName]
+    -- ^ Disabled plugins
     -> VCS m
     -> PluginDiscoverer m
     -> m ()
-runCommand cmd search_mode VCS{..} PluginDiscoverer{..} = go cmd
+runCommand cmd search_mode disabled_plugins VCS{..} PluginDiscoverer{..} =
+    go cmd
   where
     cd = getTopLevel >>= liftIO . setCurrentDirectory
     go CmdInit = do
@@ -121,7 +124,9 @@ runCommand cmd search_mode VCS{..} PluginDiscoverer{..} = go cmd
         check_fs <- getFiles search_mode
         when (null check_fs) (success "Vacuous success - Nothing to check")
 
-        plugins <- filter enabled <$> discoverPlugins
+        plugins <- filter ((`notElem` disabled_plugins) . pluginName)
+                 . filter enabled
+               <$> discoverPlugins
         when (null check_fs) (success "Vacuous success - No plugins enabled")
 
         all_fs <- getFiles FindAll

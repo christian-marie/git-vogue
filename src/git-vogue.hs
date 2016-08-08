@@ -11,6 +11,7 @@
 
 module Main where
 
+import           Data.String                        (fromString)
 import qualified Data.Text.Lazy                     as T
 import           Git.Vogue.PluginDiscoverer.Libexec
 import           Git.Vogue.VCS.Git
@@ -27,6 +28,7 @@ optionsParser :: Parser VogueOptions
 optionsParser = flip Options
     <$> commandParser
     <*> searchP
+    <*> many disableP
   where
     searchP :: Parser SearchMode
     searchP = fileList <|> allFlag
@@ -35,6 +37,14 @@ optionsParser = flip Options
         (  long "all"
         <> short 'A'
         <> help "Apply to all files, not just changed files."
+        )
+
+    disableP :: Parser PluginName
+    disableP = fromString <$> strOption
+        (  long "disable"
+        <> short 'd'
+        <> help "Disable the plugin"
+        <> metavar "PLUGIN_NAME"
         )
 
 commandParser :: Parser VogueCommand
@@ -71,6 +81,7 @@ main = do
   libexec_path <- getLibexecDir
   runCommand (optCommand opt)
              (optSearch opt)
+             (optDisable opt)
              gitVCS
              (libExecDiscoverer libexec_path)
   where
