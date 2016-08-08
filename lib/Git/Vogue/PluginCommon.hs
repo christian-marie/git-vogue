@@ -175,13 +175,13 @@ pluginCommandParser = subparser
 -- Helper for plugin commands that take [FilePath]s
 fpCommand
     :: String
-    -> ([FilePath] -> [FilePath] -> a)
+    -> (FilePath -> FilePath -> a)
     -> String
     -> Mod CommandFields a
 fpCommand name ctor desc = command name (info parser (progDesc desc))
   where
-    parser = ctor <$> argument (lines <$> str) (metavar "CHECKABLE_FILES")
-                  <*> argument (lines <$> str) (metavar "ALL_FILES")
+    parser = ctor <$> argument str (metavar "CHECKABLE_FILES_LIST")
+                  <*> argument str (metavar "ALL_FILES_LIST")
 
 -- | Sub-command helper
 pureSubCommand :: String -> a -> String -> Mod CommandFields a
@@ -199,9 +199,9 @@ getPluginCommand hdr desc = execParser parser
 -- | Arguments to the plugin
 data PluginCommand
     -- | Check the project for problems.
-    = CmdCheck [FilePath] [FilePath]
+    = CmdCheck FilePath FilePath
     -- | Fix problems in the project.
-    | CmdFix [FilePath] [FilePath]
+    | CmdFix FilePath FilePath
     -- | Report details.
     | CmdName
 

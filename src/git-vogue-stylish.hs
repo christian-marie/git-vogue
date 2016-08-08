@@ -34,7 +34,8 @@ main = do
   where
     hsFiles = filter (isSuffixOf ".hs")
     f _ CmdName  = putStrLn "stylish"
-    f cfg (CmdCheck files _) = do
+    f cfg (CmdCheck check_fs_list _) = do
+        files <- read <$> readFile check_fs_list
         rs <- traverse (stylishCheckFile cfg) (hsFiles files)
         if and rs
             then do
@@ -43,7 +44,8 @@ main = do
             else
                 exitFailure
 
-    f cfg (CmdFix files _) = do
+    f cfg (CmdFix check_fs_list _) = do
+        files <- read <$> readFile check_fs_list
         let files' = hsFiles files
         -- Fix all of the things first
         traverse_ (stylishRunFile cfg) files'
