@@ -6,6 +6,7 @@ import           Distribution.PackageDescription    (PackageDescription (..))
 import           Distribution.Simple
 import           Distribution.Simple.Install
 import           Distribution.Simple.LocalBuildInfo
+import           Distribution.Simple.Program
 import           Distribution.Simple.Setup
 import           Distribution.Simple.Utils
 import           System.FilePath
@@ -14,7 +15,8 @@ import           System.FilePath
 -- libexec directory.
 main :: IO ()
 main = defaultMainWithHooks $ simpleUserHooks
-    { copyHook = copyThings
+    { copyHook = copyThings,
+      hookedPrograms = [simpleProgram "git"]
     }
 
 -- | Copy "extra" executables to $PREFIX/libexec/git-vogue/ instead of

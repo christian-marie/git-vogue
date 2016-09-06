@@ -40,7 +40,9 @@ main =
             "git-vogue-hlint - check for hlint problems"
   where
     f CmdName  = putStrLn "hlint"
-    f (CmdCheck check_fs all_fs) = do
+    f (CmdCheck check_fs_list all_fs_list) = do
+        check_fs <- read <$> readFile check_fs_list
+        all_fs <- read <$> readFile all_fs_list
         -- Traverse the files, parsing and processing as we go for efficiency
         rs <- forProjects (hsProjects check_fs all_fs) $ \fs -> do
             let hss = filter (isSuffixOf ".hs") fs
@@ -67,9 +69,10 @@ main =
         process classify hint =
             bimap (\x -> parseErrorMessage x <> show (parseErrorLocation x))
                   (\x -> showANSI . filter g $ applyHints classify hint [x])
-        g x = case ideaSeverity x of Ignore  -> False
-                                     Warning -> True
-                                     Error   -> True
+        g x = case ideaSeverity x of Ignore     -> False
+                                     Suggestion -> True
+                                     Warning    -> True
+                                     Error      -> True
 
     f CmdFix{} = do
         outputBad $ "There are outstanding hlint failures, you need to fix this "

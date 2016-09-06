@@ -33,7 +33,9 @@ main = f =<< getPluginCommand
   where
     f CmdName  = putStrLn "cabal"
 
-    f (CmdCheck check_fs all_fs) = do
+    f (CmdCheck check_fs_list all_fs_list) = do
+        check_fs <- read <$> readFile check_fs_list
+        all_fs <- read <$> readFile all_fs_list
         -- Grab all the projects dirs we want to traverse through
         rs <- forProjects (hsProjects check_fs all_fs) (const check)
         unless (and rs) exitFailure
@@ -68,8 +70,8 @@ check = do
     unless (null distInexusable) $ do
         outputBad "The following errors will cause portability problems on other environments:"
         printCheckMessages distInexusable
-    let isDistError (PackageDistSuspicious {}) = False
-        isDistError _                          = True
+    let isDistError PackageDistSuspicious {} = False
+        isDistError _                        = True
         errors = filter isDistError packageChecks
     unless (null errors) $
         outputBad "Hackage would reject this package."
