@@ -18,6 +18,7 @@ module Main where
 
 import           Control.Applicative
 import           Control.Monad
+import           Data.Foldable                      (traverse_)
 import           Data.Map                           (fromList)
 import           System.Directory
 import           System.FilePath
@@ -144,7 +145,12 @@ withGitRepo' f =
         -- strange things with a bracket, so we don't bracket.
         canonical_dir <- canonicalizePath temp_dir
         before_dir <- getCurrentDirectory
-        void $ git ["init", canonical_dir]
+        let setup = [ ["init", canonical_dir]
+                      , ["config", "--local", "user.email", "test"]
+                      , ["config", "--local", "user.name", "test2"]
+                    ] :: [[String]]
+
         setCurrentDirectory canonical_dir
+        traverse_ git setup
         f canonical_dir
         setCurrentDirectory before_dir
