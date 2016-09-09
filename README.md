@@ -12,7 +12,7 @@ Currently, *git-vogue* ships with the following plugins:
 * [cabal][6]
 * [hlint][2]
 * [stylish-haskell][4] with automatic fixing
-* [ghc-mod][5]
+* [ghc-mod][5] (not with ghc8 , yet)
 
 [1]: https://www.youtube.com/watch?v=GuJQSAiODqI
 [2]: http://hackage.haskell.org/package/hlint
