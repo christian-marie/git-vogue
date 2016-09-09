@@ -86,13 +86,20 @@ executable git-vogue-stylish
                      , strict
                      , stylish-haskell >= 0.5.16 && < 0.7
 
+Flag ghc-mod
+  Description: build ghc-mod plugin
+  Default: True
+
 executable git-vogue-ghc-mod
+  if flag(ghc-mod)
+    build-depends:       base
+                       , ghc-mod         >= 5.2    && < 5.6
+                       , git-vogue
+  else
+    buildable: False
   default-language:    Haskell2010
   hs-source-dirs:      src
   main-is:             git-vogue-ghc-mod.hs
-  build-depends:       base
-                     , ghc-mod         >= 5.2    && < 5.6
-                     , git-vogue
 
 test-suite unit
   type:                exitcode-stdio-1.0
