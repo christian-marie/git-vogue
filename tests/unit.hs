@@ -142,8 +142,9 @@ withGitRepo' f =
     withSystemTempDirectory "git-setup-test." $ \temp_dir -> do
         -- For some unknown reason, setting the current directory appears to do
         -- strange things with a bracket, so we don't bracket.
+        canonical_dir <- canonicalizePath temp_dir
         before_dir <- getCurrentDirectory
-        void $ git ["init", temp_dir]
-        setCurrentDirectory temp_dir
-        f temp_dir
+        void $ git ["init", canonical_dir]
+        setCurrentDirectory canonical_dir
+        f canonical_dir
         setCurrentDirectory before_dir
