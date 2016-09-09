@@ -28,7 +28,7 @@ import           Data.Text.Lazy         (Text)
 import qualified Data.Text.Lazy.IO      as T
 import           Data.Traversable       hiding (sequence)
 import           Formatting
-import           Prelude                hiding (elem, maximum)
+import           Prelude                hiding (notElem, elem, maximum)
 import           System.Directory
 import           System.Exit
 
