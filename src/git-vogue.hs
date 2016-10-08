@@ -15,6 +15,7 @@ import           Data.String                        (fromString)
 import qualified Data.Text.Lazy                     as T
 import           Git.Vogue.PluginDiscoverer.Libexec
 import           Git.Vogue.VCS.Git
+import           Git.Vogue.VCS.Null
 import           Options.Applicative
 
 import           Git.Vogue
@@ -29,6 +30,7 @@ optionsParser = flip Options
     <$> commandParser
     <*> searchP
     <*> many disableP
+    <*> vcsP
   where
     searchP :: Parser SearchMode
     searchP = fileList <|> allFlag
@@ -38,6 +40,12 @@ optionsParser = flip Options
         <> short 'A'
         <> help "Apply to all files, not just changed files."
         )
+    vcsP :: Parser VCSType
+    vcsP = flag Git Null
+        (  long "nogit"
+        <> help "Don't require a .git directory. Some functionality is disabled"
+        )
+
 
     disableP :: Parser PluginName
     disableP = fromString <$> strOption
@@ -78,11 +86,14 @@ parseEnableDisable ctor = ctor <$> argument (PluginName . T.pack <$> str)
 main :: IO ()
 main = do
   opt <- execParser opts
+  let vcs = case optVCS opt of
+              Git  -> gitVCS
+              Null -> nullVCS
   libexec_path <- getLibexecDir
   runCommand (optCommand opt)
              (optSearch opt)
              (optDisable opt)
-             gitVCS
+             vcs
              (libExecDiscoverer libexec_path)
   where
     opts = info (helper <*> optionsParser)

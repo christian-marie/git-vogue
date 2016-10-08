@@ -25,7 +25,11 @@ data VogueOptions = Options
     { optSearch  :: SearchMode
     , optCommand :: VogueCommand
     , optDisable :: [PluginName]
+    , optVCS     :: VCSType
     }
+  deriving (Eq, Show)
+
+data VCSType = Git | Null
   deriving (Eq, Show)
 
 -- | Commands, with parameters, to be executed.
