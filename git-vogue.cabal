@@ -32,7 +32,7 @@ library
                        Git.Vogue.PluginDiscoverer.Libexec
                        Git.Vogue.PluginCommon
   other-modules:       Paths_git_vogue
-  build-depends:       base >=4.6 && <5
+  build-depends:       base >=4.8 && <5
                      , containers
                      , directory
                      , extra >= 1.4 && < 1.6
@@ -93,7 +93,7 @@ executable git-vogue-stylish
                      , Diff
                      , git-vogue
                      , strict
-                     , stylish-haskell >= 0.5.15 && < 0.7
+                     , stylish-haskell >= 0.6.0.0 && < 0.7.0.0
 
 Flag ghc-mod
   Description: build ghc-mod plugin
@@ -102,7 +102,7 @@ Flag ghc-mod
 executable git-vogue-ghc-mod
   if flag(ghc-mod)
     build-depends:       base
-                       , ghc-mod         >= 5.2    && < 5.6
+                       , ghc-mod         >= 5.6 && < 5.7
                        , git-vogue
   else
     buildable: False
