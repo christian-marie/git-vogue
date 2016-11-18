@@ -11,7 +11,7 @@ copyright:           (c) 2016 Anchor Systems, Pty Ltd and Others
 category:            Development
 build-type:          Custom
 extra-source-files:  README.md, changelog.txt
-cabal-version:       >=1.23
+cabal-version:       >=1.16
 data-files:          templates/pre-commit
 
 source-repository HEAD
