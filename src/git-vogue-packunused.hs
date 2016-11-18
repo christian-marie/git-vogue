@@ -45,5 +45,5 @@ check = do
         , "--ignore-package", "base"
         ] ""
     case exit of
-        ExitSuccess -> return True
+        ExitSuccess   -> return True
         ExitFailure _ -> putStrLn sout >> return False

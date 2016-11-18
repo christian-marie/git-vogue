@@ -121,5 +121,5 @@ showSrcLoc (SrcLoc file line col) = file <> ":" <> show line <> ":" <> show col 
 showNotes :: [Note] -> String
 showNotes = intercalate ", " . fmap show . filter use
     where use ValidInstance{} = False -- Not important enough to tell an end user
-          use _ = True
+          use _               = True
 

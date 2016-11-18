@@ -73,8 +73,9 @@ check = do
     let isDistError PackageDistSuspicious {} = False
         isDistError _                        = True
         errors = filter isDistError packageChecks
-    unless (null errors) $
+    unless (null errors) $ do
         outputBad "Hackage would reject this package."
+        printCheckMessages errors
     when (null packageChecks) $
         outputGood "Checked cabal file"
     return (null packageChecks)

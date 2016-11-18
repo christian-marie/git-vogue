@@ -11,7 +11,7 @@ copyright:           (c) 2016 Anchor Systems, Pty Ltd and Others
 category:            Development
 build-type:          Custom
 extra-source-files:  README.md, changelog.txt
-cabal-version:       >=1.10
+cabal-version:       >=1.23
 data-files:          templates/pre-commit
 
 source-repository HEAD
@@ -93,7 +93,7 @@ executable git-vogue-stylish
                      , Diff
                      , git-vogue
                      , strict
-                     , stylish-haskell >= 0.6.0.0 && < 0.7.0.0
+                     , stylish-haskell >= 0.5.17.0 && < 0.7.0.0
 
 Flag ghc-mod
   Description: build ghc-mod plugin
@@ -102,7 +102,7 @@ Flag ghc-mod
 executable git-vogue-ghc-mod
   if flag(ghc-mod)
     build-depends:       base
-                       , ghc-mod         >= 5.6 && < 5.7
+                       , ghc-mod         >= 5.5 && < 5.7
                        , git-vogue
   else
     buildable: False
