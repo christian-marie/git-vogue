@@ -11,6 +11,7 @@
 
 module Main where
 
+import           Data.Monoid                        ((<>))
 import           Data.String                        (fromString)
 import qualified Data.Text.Lazy                     as T
 import           Git.Vogue.PluginDiscoverer.Libexec
