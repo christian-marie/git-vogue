@@ -7,15 +7,19 @@
 -- the 3-clause BSD licence.
 --
 
+{-# LANGUAGE ViewPatterns #-}
+
 -- | Description: Check with "packunused".
 module Main where
 
+import           Control.Exception
 import           Control.Monad          (unless)
 import           Data.Foldable
 import           Data.Monoid
 import           Git.Vogue.PluginCommon
 import           Prelude                hiding (and, mapM_)
 import           System.Exit
+import           System.IO.Error
 import           System.Process
 
 main :: IO ()
@@ -40,10 +44,18 @@ main = f =<< getPluginCommand
 -- | Runs the @packunused@ command, assuming that the build is current.
 check :: IO Bool
 check = do
-    (exit, sout, _serr) <- readProcessWithExitCode "packunused"
+    r <- try $ readProcessWithExitCode "packunused"
         [ "--ignore-empty-imports"
         , "--ignore-package", "base"
         ] ""
-    case exit of
-        ExitSuccess   -> return True
-        ExitFailure _ -> putStrLn sout >> return False
+    case r of
+        Right (ExitSuccess, _, _) -> do
+            outputGood "No unused dependencies. "
+            return True
+        Right (ExitFailure e, sout, _serr) -> do
+            outputBad sout
+            return False
+        Left (isDoesNotExistError -> True) -> do
+            outputUnfortunate "Could not find packunused, vacuously succeeding."
+            return True
+        Left e -> throwIO e
