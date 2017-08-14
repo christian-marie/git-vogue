@@ -14,14 +14,14 @@ import           Control.Applicative
 import           Control.Monad
 import           Data.Char
 import           Data.Foldable
-import           Data.List                     hiding (and, notElem)
+import           Data.List              hiding (and, notElem)
 import           Data.Maybe
 import           Data.Monoid
 import           Data.Traversable
+import           GhcMod
+import           GhcMod.Monad
 import           Git.Vogue.PluginCommon
-import           Language.Haskell.GhcMod
-import           Language.Haskell.GhcMod.Monad
-import           Prelude                       hiding (and, notElem)
+import           Prelude                hiding (and, notElem)
 import           System.Exit
 
 main :: IO ()

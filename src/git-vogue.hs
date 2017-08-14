@@ -39,6 +39,7 @@ optionsParser = flip Options
     allFlag = flag FindChanged FindAll
         (  long "all"
         <> short 'A'
+        <> short 'a'
         <> help "Apply to all files, not just changed files."
         )
     vcsP :: Parser VCSType

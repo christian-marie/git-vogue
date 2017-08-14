@@ -107,7 +107,7 @@ Flag ghc-mod
 executable git-vogue-ghc-mod
   if flag(ghc-mod)
     build-depends:       base
-                       , ghc-mod         >= 5
+                       , ghc-mod         >= 5.8
                        , git-vogue
   else
     buildable: False

@@ -7,8 +7,6 @@
 -- the 3-clause BSD licence.
 --
 
-{-# LANGUAGE TupleSections #-}
-
 -- | Common helpers for git vogue plugins
 module Git.Vogue.PluginCommon
 (
