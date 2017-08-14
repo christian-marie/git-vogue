@@ -1,13 +1,13 @@
 name:                git-vogue
-version:             0.2.2.0
+version:             0.2.2.1
 synopsis:            A framework for pre-commit checks.
 description:         Make your Haskell git repositories fashionable.
 homepage:            https://github.com/christian-marie/git-vogue
 license:             BSD3
 license-file:        LICENSE
 author:              Anchor Engineering (defunct)
-maintainer:          Oswyn Brent <oztastic703@gmail.com>, Christian Marie <christian@ponies.io>
-copyright:           (c) 2016 Anchor Systems, Pty Ltd and Others
+maintainer:          Christian Marie <christian@ponies.io>, Oswyn Brent <oztastic703@gmail.com>
+copyright:           (c) 2017 Christian Marie, Anchor Systems, Pty Ltd and Others
 category:            Development
 build-type:          Custom
 extra-source-files:  README.md, changelog.txt
@@ -17,7 +17,7 @@ data-files:          templates/pre-commit
 custom-setup
   setup-depends: base
                , filepath
-               , Cabal 
+               , Cabal
 
 source-repository HEAD
   type: git
@@ -77,7 +77,7 @@ executable git-vogue-hlint
                      , directory
                      , git-vogue
                      , haskell-src-exts
-                     , hlint           >= 1.9.27 && < 1.10
+                     , hlint           >= 2
                      , hscolour
   if !flag(gpl)
         cpp-options: -DGPL_SCARES_ME
@@ -98,7 +98,7 @@ executable git-vogue-stylish
                      , Diff
                      , git-vogue
                      , strict
-                     , stylish-haskell >= 0.5.17.0 && < 0.8.0.0
+                     , stylish-haskell >= 0.7
 
 Flag ghc-mod
   Description: build ghc-mod plugin
@@ -107,7 +107,7 @@ Flag ghc-mod
 executable git-vogue-ghc-mod
   if flag(ghc-mod)
     build-depends:       base
-                       , ghc-mod         >= 5.7 && < 5.8
+                       , ghc-mod         >= 5
                        , git-vogue
   else
     buildable: False
