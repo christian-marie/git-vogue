@@ -1,4 +1,4 @@
-2017-08-14 v0.2.0.1 Christian Marie <christian@ponies.io>
+2017-08-14 v0.2.2.1 Christian Marie <christian@ponies.io>
 	* dependencies: Bump ghc-mod, hlint and stylish-haskell to be inline
 	                with latest stack-9.0 lts
         * plugins: ghc-mod will only work with >=5.8 now due CPP allergy
