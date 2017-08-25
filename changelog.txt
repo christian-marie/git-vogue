@@ -1,3 +1,8 @@
+2017-08-25 v0.2.2.2 Christian Marie <christian@ponies.io>
+	* plugins: cabal plugin ignores dubious warning about AllRightsReserved
+	           license
+	* plugins: hlint plugin now exits with correct codes
+
 2017-08-14 v0.2.2.1 Christian Marie <christian@ponies.io>
 	* dependencies: Bump ghc-mod, hlint and stylish-haskell to be inline
 	                with latest stack-9.0 lts
