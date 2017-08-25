@@ -44,7 +44,7 @@ main =
         check_fs <- read <$> readFile check_fs_list
         all_fs <- read <$> readFile all_fs_list
         -- Traverse the files, parsing and processing as we go for efficiency
-        rs <- forProjects (hsProjects check_fs all_fs) $ \fs -> do
+        void . forProjects (hsProjects check_fs all_fs) $ \fs -> do
             let hss = filter (isSuffixOf ".hs") fs
 
             (flags, classify, hint) <- autoSettings'
@@ -60,11 +60,11 @@ main =
             let out = unlines errors <> "\n" <> ideas
 
             let ok = null ideas && null errors
-            unless ok (outputBad out)
+            unless ok $ do
+                outputBad out
+                exitFailure
             outputGood $ "Checked " <> show (length hss) <> " file(s)"
-            return ok
-
-        unless (and rs) exitFailure
+            exitSuccess
       where
         process classify hint =
             bimap (\x -> parseErrorMessage x <> show (parseErrorLocation x))
