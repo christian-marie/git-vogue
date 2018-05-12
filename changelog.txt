@@ -1,5 +1,6 @@
 2018-05-12 v0.3.0.2 Christian Marie <christian@ponies.io>
         * compatibility: GHC 8.4.2
+        * plugins: cabal plugin only works with Cabal >=2.2, now optional via the cabal flag
 
 2018-05-12 v0.3.0.1 Christian Marie <christian@ponies.io>
         * tests: update unit tests

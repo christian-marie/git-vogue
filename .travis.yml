@@ -44,10 +44,10 @@ matrix:
   #- env: BUILD=cabal GHCVER=7.4.2 CABALVER=1.16 HAPPYVER=1.19.5 ALEXVER=3.1.7
   #  compiler: ": #GHC 7.4.2"
   #  addons: {apt: {packages: [cabal-install-1.16,ghc-7.4.2,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
-  - env: BUILD=stack ARGS="--resolver lts-11.8"
+  - env: BUILD=stack ARGS="--resolver lts-11.8" EXTRA_ARGS=""
     compiler: ": #stack 8.2.2"
     addons: {apt: {packages: [libgmp-dev]}}
-  - env: BUILD=stack ARGS="--resolver nightly --flag git-vogue:cabal"
+  - env: BUILD=stack ARGS="--resolver nightly" EXTRA_ARGS="--flag git-vogue:cabal"
     compiler: ": #stack nightly"
     addons: {apt: {packages: [libgmp-dev]}}
 
@@ -88,7 +88,7 @@ install:
   set -ex
   case "$BUILD" in
     stack)
-      stack --no-terminal --install-ghc $ARGS test --bench --only-dependencies
+      stack --no-terminal --install-ghc $ARGS test --bench --only-dependencies $EXTRA_ARGS
       ;;
     cabal)
       cabal --version
@@ -104,7 +104,7 @@ script:
   set -ex
   case "$BUILD" in
     stack)
-      stack --no-terminal $ARGS test --bench --no-run-benchmarks --haddock --no-haddock-deps
+      stack --no-terminal $ARGS test --bench --no-run-benchmarks --haddock --no-haddock-deps $EXTRA_ARGS
       ;;
     cabal)
       cabal install --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 $CABALARGS $PACKAGES
