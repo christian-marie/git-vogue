@@ -1,33 +1,36 @@
+2018-05-12 v0.3.0.2 Christian Marie <christian@ponies.io>
+        * compatibility: GHC 8.4.2
+
 2018-05-12 v0.3.0.1 Christian Marie <christian@ponies.io>
-	* tests: update unit tests
+        * tests: update unit tests
 
 2018-05-12 v0.3.0.0 Christian Marie <christian@ponies.io>
-	* plugins: disable ghc-mod until it builds with ghc 8.x, only latest
-	           stack LTS and beyond will be supported
-	* misc: Setup.hs ported to cabal 2, greatly simplifying things
+        * plugins: disable ghc-mod until it builds with ghc 8.x, only latest
+                   stack LTS and beyond will be supported
+        * misc: Setup.hs ported to cabal 2, greatly simplifying things
 2017-08-25 v0.2.2.2 Christian Marie <christian@ponies.io>
-	* plugins: cabal plugin ignores dubious warning about AllRightsReserved
-	           license
-	* plugins: hlint plugin now exits with correct codes
+        * plugins: cabal plugin ignores dubious warning about AllRightsReserved
+                   license
+        * plugins: hlint plugin now exits with correct codes
 
 2017-08-14 v0.2.2.1 Christian Marie <christian@ponies.io>
-	* dependencies: Bump ghc-mod, hlint and stylish-haskell to be inline
-	                with latest stack-9.0 lts
+        * dependencies: Bump ghc-mod, hlint and stylish-haskell to be inline
+                        with latest stack-9.0 lts
         * plugins: ghc-mod will only work with >=5.8 now due CPP allergy
-	* plugins: packunused plugin now vacuously succeeds if binary not found
+        * plugins: packunused plugin now vacuously succeeds if binary not found
 
 2015-01-30 v0.2.0.1 Christian Marie <christian@ponies.io>
-	* dependencies: Drop list-tries dependency
+        * dependencies: Drop list-tries dependency
 
 2015-01-21 v0.2.0.0 Christian Marie <christian@ponies.io>
-	* plugins: All plugins now support multiple repositories
-	* plugins: Output is formatted and streamed as it is generated
-	* git-vogue: Provide interface for plugin enabling/disabling
-	* git-vogue: Modular VCS architecture introduced
-	* git-vogue: Allow checking of a single file via git-vogue check file
+        * plugins: All plugins now support multiple repositories
+        * plugins: Output is formatted and streamed as it is generated
+        * git-vogue: Provide interface for plugin enabling/disabling
+        * git-vogue: Modular VCS architecture introduced
+        * git-vogue: Allow checking of a single file via git-vogue check file
 
 2015-01-05 v0.1.0.4 Christian Marie <christian@ponies.io>
-	* plugins: Allow disabling of plugins via git config
+        * plugins: Allow disabling of plugins via git config
 
 2015-01-05 v0.1.0.3 Christian Marie <christian@ponies.io>
-	* Initial public release
+        * Initial public release
