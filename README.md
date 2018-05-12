@@ -30,7 +30,9 @@ cabal install git-vogue
 OR
 
 ```
-stack install git-vogue
+git clone https://github.com/christian-marie/git-vogue.git
+cd git-vogue
+stack install
 ```
 
 If you wish to set up pre-commit hooks (recommended):
