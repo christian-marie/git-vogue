@@ -57,7 +57,7 @@ discover
     => FilePath
     -> m [Plugin m]
 discover libexec_dir = do
-    let libexec_plugins = libexec_dir </> "git-vogue"
+    let libexec_plugins = libexec_dir
 
     -- Check if libexec dir does not exist, and notify user that this may be
     -- caused by cabal being dumb.

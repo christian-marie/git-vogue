@@ -1,5 +1,5 @@
 name:                git-vogue
-version:             0.2.2.2
+version:             0.3.0.0
 synopsis:            A framework for pre-commit checks.
 description:         Make your Haskell git repositories fashionable.
 homepage:            https://github.com/christian-marie/git-vogue
@@ -11,13 +11,8 @@ copyright:           (c) 2017 Christian Marie, Anchor Systems, Pty Ltd and Other
 category:            Development
 build-type:          Custom
 extra-source-files:  README.md, changelog.txt
-cabal-version:       >=1.23
+cabal-version:       >=2
 data-files:          templates/pre-commit
-
-custom-setup
-  setup-depends: base
-               , filepath
-               , Cabal
 
 source-repository HEAD
   type: git
@@ -40,10 +35,10 @@ library
   build-depends:       base >=4.8 && <5
                      , containers
                      , directory
-                     , extra >= 1.4 && < 1.6
+                     , extra >= 1.4
                      , filepath
                      , formatting
-                     , optparse-applicative >= 0.11 && < 0.14
+                     , optparse-applicative >= 0.11
                      , process
                      , split
                      , text
@@ -61,6 +56,7 @@ executable git-vogue
 
 executable git-vogue-cabal
   default-language:    Haskell2010
+  scope:               private
   hs-source-dirs:      src
   main-is:             git-vogue-cabal.hs
   build-depends:       base
@@ -69,6 +65,7 @@ executable git-vogue-cabal
 
 executable git-vogue-hlint
   default-language:    Haskell2010
+  scope:               private
   hs-source-dirs:      src
   main-is:             git-vogue-hlint.hs
   build-depends:       base
@@ -84,6 +81,7 @@ executable git-vogue-hlint
 
 executable git-vogue-packunused
   default-language:    Haskell2010
+  scope:               private
   hs-source-dirs:      src
   main-is:             git-vogue-packunused.hs
   build-depends:       base
@@ -92,6 +90,7 @@ executable git-vogue-packunused
 
 executable git-vogue-stylish
   default-language:    Haskell2010
+  scope:               private
   hs-source-dirs:      src
   main-is:             git-vogue-stylish.hs
   build-depends:       base
@@ -100,9 +99,11 @@ executable git-vogue-stylish
                      , strict
                      , stylish-haskell >= 0.7
 
+-- ghc_mod is off by default, and only sticking around in case it starts working
+-- again one day with ghc 8.x
 Flag ghc-mod
   Description: build ghc-mod plugin
-  Default: True
+  Default: False
 
 executable git-vogue-ghc-mod
   if flag(ghc-mod)
@@ -112,6 +113,7 @@ executable git-vogue-ghc-mod
   else
     buildable: False
   default-language:    Haskell2010
+  scope:               private
   hs-source-dirs:      src
   main-is:             git-vogue-ghc-mod.hs
 

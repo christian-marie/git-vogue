@@ -66,7 +66,7 @@ getConfig =
     let v = makeVerbose False
     in do
        config <- configFilePath v Nothing
-       loadConfig v (Just config)
+       loadConfig v config
 
 -- | Checks whether running Stylish over a given file produces any differences.
 -- Returns TRUE if there's nothing left to change.
