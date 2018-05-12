@@ -7,6 +7,8 @@
 -- the 3-clause BSD licence.
 --
 
+{-# LANGUAGE LambdaCase #-}
+
 -- | Description: Check with "cabal check".
 module Main where
 
@@ -14,14 +16,14 @@ import           Control.Applicative
 import           Control.Monad
 import           Data.Char
 import           Data.Foldable
-import           Data.List              hiding (and, notElem)
+import           Data.List              hiding (and)
 import           Data.Maybe
 import           Data.Monoid
 import           Data.Traversable
 import           GhcMod
 import           GhcMod.Monad
 import           Git.Vogue.PluginCommon
-import           Prelude                hiding (and, notElem)
+import           Prelude                hiding (and)
 import           System.Exit
 
 main :: IO ()
@@ -87,8 +89,8 @@ ghcModCheck files = do
                 return rs
 
     -- Traverse the errors, picking errors and warnings out
-    maybe_ws <- for warn_errs $ \warn_err ->
-        case warn_err of
+    maybe_ws <- for warn_errs $
+        \case
             -- Errors in files
             Left e ->
                 return . Just $ explain e

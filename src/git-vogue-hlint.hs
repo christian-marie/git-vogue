@@ -17,14 +17,14 @@ import           Control.Applicative
 import           Control.Monad
 import           Data.Bifunctor
 import           Data.Foldable
-import           Data.List                           hiding (and, concat)
+import           Data.List                           hiding (concat)
 import           Data.Monoid
 import           Data.Traversable
 import           Git.Vogue.PluginCommon
 import           Language.Haskell.Exts.SrcLoc
 import           Language.Haskell.HLint3
 import           Language.Preprocessor.Cpphs
-import           Prelude                             hiding (and, concat)
+import           Prelude                             hiding (concat)
 import           System.Directory
 import           System.Exit
 

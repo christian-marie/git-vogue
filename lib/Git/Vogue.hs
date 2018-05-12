@@ -24,7 +24,7 @@ import           Data.Foldable
 import           Data.Maybe
 import           Data.Text.Lazy         (Text)
 import qualified Data.Text.Lazy.IO      as T
-import           Data.Traversable       hiding (sequence)
+import           Data.Traversable
 import           Formatting
 import           Prelude                hiding (elem, maximum, notElem)
 import           System.Directory

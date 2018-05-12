@@ -81,9 +81,7 @@ check = do
     return (null packageChecks)
   where
     goodCheck (PackageDistSuspicious msg) =
-        not (or [ "ghc-options: -O2" `isInfixOf` msg
-                , "'license' is AllRightsReserved" `isInfixOf` msg
-                ])
+        not ("ghc-options: -O2" `isInfixOf` msg || "'license' is AllRightsReserved" `isInfixOf` msg)
     goodCheck _ = True
 
     printCheckMessages = mapM_ (outputBad . format . explanation)

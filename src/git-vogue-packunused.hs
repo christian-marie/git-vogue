@@ -17,7 +17,7 @@ import           Control.Monad          (unless)
 import           Data.Foldable
 import           Data.Monoid
 import           Git.Vogue.PluginCommon
-import           Prelude                hiding (and, mapM_)
+import           Prelude                hiding (and)
 import           System.Exit
 import           System.IO.Error
 import           System.Process
