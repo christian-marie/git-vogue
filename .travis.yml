@@ -88,7 +88,7 @@ install:
   set -ex
   case "$BUILD" in
     stack)
-      stack --no-terminal --install-ghc $ARGS test --bench --only-dependencies $EXTRA_ARGS
+      stack --no-terminal --install-ghc $ARGS build --bench --only-dependencies $EXTRA_ARGS
       ;;
     cabal)
       cabal --version
@@ -104,7 +104,7 @@ script:
   set -ex
   case "$BUILD" in
     stack)
-      stack --no-terminal $ARGS test --bench --no-run-benchmarks --haddock --no-haddock-deps $EXTRA_ARGS
+      stack --no-terminal $ARGS build --bench --no-run-benchmarks --haddock --no-haddock-deps $EXTRA_ARGS
       ;;
     cabal)
       cabal install --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 $CABALARGS $PACKAGES
