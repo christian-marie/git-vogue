@@ -16,7 +16,7 @@ import           Data.List                                     hiding (and)
 import           Data.Monoid
 import           Distribution.PackageDescription.Check
 import           Distribution.PackageDescription.Configuration (flattenPackageDescription)
-import           Distribution.PackageDescription.Parse         (readPackageDescription)
+import           Distribution.PackageDescription.Parse         (readGenericPackageDescription)
 import           Distribution.Simple.Utils                     (defaultPackageDesc,
                                                                 toUTF8,
                                                                 wrapText)
@@ -50,7 +50,7 @@ main = f =<< getPluginCommand
 check :: IO Bool
 check = do
     pdfile <- defaultPackageDesc silent
-    ppd <- readPackageDescription silent pdfile
+    ppd <- readGenericPackageDescription silent pdfile
     let pkg_desc = flattenPackageDescription ppd
     ioChecks <- checkPackageFiles pkg_desc "."
     let packageChecks = filter goodCheck $ ioChecks <> checkPackage ppd (Just pkg_desc)

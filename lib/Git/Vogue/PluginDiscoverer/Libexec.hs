@@ -26,11 +26,12 @@ import           Data.String
 import           Data.Text.Lazy         (Text)
 import qualified Data.Text.Lazy         as T
 import           Data.Traversable
-import           Extra                  (withTempFile)
 import           System.Directory
 import           System.Environment
 import           System.Exit
 import           System.FilePath
+import           System.IO
+import           System.IO.Temp         (withSystemTempFile)
 import           System.Process
 
 import           Git.Vogue.Types
@@ -134,11 +135,13 @@ runPlugin
     -> [FilePath]
     -> m Result
 runPlugin plugin cmd check_fs all_fs = liftIO $ do
-    (status, out, err) <- withTempFile (\checkFileListPath ->
-        withTempFile (\allFileListPath -> do
-          writeFile checkFileListPath (show check_fs)
-          writeFile allFileListPath (show all_fs)
-          readProcessWithExitCode plugin [cmd, checkFileListPath, allFileListPath] ""
+    (status, out, err) <- withSystemTempFile "gv1" (\checkFileList checkFileListHandle ->
+        withSystemTempFile "gv2" (\allFileList allFileListHandle -> do
+          hPutStr checkFileListHandle (show check_fs)
+          hPutStr allFileListHandle (show all_fs)
+          hFlush checkFileListHandle
+          hFlush allFileListHandle
+          readProcessWithExitCode plugin [cmd, checkFileList, allFileList] ""
         )
       )
     let glommed = fromString $ out <> err
