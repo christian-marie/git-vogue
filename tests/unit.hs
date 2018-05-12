@@ -20,6 +20,7 @@ import           Control.Applicative
 import           Control.Monad
 import           Data.Foldable                      (traverse_)
 import           Data.Map                           (fromList)
+import           Data.Traversable                   (traverse)
 import           System.Directory
 import           System.FilePath
 import           System.IO.Temp
@@ -49,12 +50,13 @@ main = do
                     fromList [ ("",["a.cabal","a.hs"])
                              , ("b/",["b.cabal", "b.hs"]) ]
 
+-- These tests are nasty and you have my permission to kill them - Christian
 testLEDiscovery :: FilePath -> PluginDiscoverer IO -> Spec
 testLEDiscovery fixtures PluginDiscoverer{..} = do
     it "discovers plugins in the libexec dir" . withSetup $  do
         ps <- discoverPlugins
         fmap pluginName ps `shouldBe`
-            ["(non-executable) ./plugins/git-vogue/non-executable"
+            ["(non-executable) ./plugins/non-executable"
             ,"exploding"
             ,"failing"
             ,"succeeding"
@@ -73,21 +75,21 @@ testLEDiscovery fixtures PluginDiscoverer{..} = do
 
     it "provides check methods that do the expected things" . withSetup $ do
         ps <- filter enabled <$> discoverPlugins
-        rs <- sequence $ fmap (\Plugin{..} -> runCheck ["a"] ["a"]) ps
+        rs <- traverse (\Plugin{..} -> runCheck ["a"] ["a"]) ps
         rs `shouldBe` [ Catastrophe 3 "something broke\n"
                       , Failure "ohnoes\n"
                       , Success "yay\n"]
 
     it "provides fix methods that do the expected things" . withSetup $ do
         ps <- filter enabled <$> discoverPlugins
-        rs <- sequence $ fmap (\Plugin{..} -> runFix ["a"] ["a"]) ps
+        rs <- traverse (\Plugin{..} -> runFix ["a"] ["a"]) ps
         rs `shouldBe` [ Catastrophe 3 "something broke\n"
                       , Failure "ohnoes\n"
                       , Success "yay\n"]
   where
     withSetup =
         withGitRepo
-        . withCopy (fixtures </> "plugins") ("plugins" </> "git-vogue")
+        . withCopy (fixtures </> "plugins")  "./"
 
 testGitVCS :: VCS IO -> Spec
 testGitVCS VCS{..} = do

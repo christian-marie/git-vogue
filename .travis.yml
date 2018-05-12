@@ -48,9 +48,9 @@ matrix:
     compiler: ": #stack 8.2.2"
     addons: {apt: {packages: [libgmp-dev]}}
 
-  - env: BUILD=stack ARGS="--resolver lts-11.8"
-    compiler: ": #stack 8.2.2 osx"
-    os: osx
+    #- env: BUILD=stack ARGS="--resolver lts-11.8"
+    #- compiler: ": #stack 8.2.2 osx"
+    #- os: osx
 
 before_install:
 # Using compiler above sets CC to an invalid value, so unset it
