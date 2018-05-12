@@ -27,6 +27,12 @@ Quickstart
 cabal install git-vogue
 ```
 
+OR
+
+```
+stack install git-vogue
+```
+
 If you wish to set up pre-commit hooks (recommended):
 
 ```bash
