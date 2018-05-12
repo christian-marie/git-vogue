@@ -16,6 +16,7 @@ module Git.Vogue.Types where
 import           Data.Function
 import           Data.Monoid
 import           Data.Ord
+import           Data.Semigroup (Semigroup)
 import           Data.String
 import           Data.Text.Lazy (Text)
 import qualified Data.Text.Lazy as T
@@ -84,7 +85,7 @@ instance Ord (Plugin m) where
 
 newtype PluginName = PluginName {
     unPluginName :: Text
-} deriving (Show, Ord, Eq, IsString, Monoid)
+} deriving (Show, Ord, Eq, IsString, Semigroup, Monoid)
 
 -- | We want the flexibility of just checking changed files, or maybe checking
 -- all of them.
