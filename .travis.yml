@@ -47,7 +47,7 @@ matrix:
   - env: BUILD=stack ARGS="--resolver lts-11.8"
     compiler: ": #stack 8.2.2"
     addons: {apt: {packages: [libgmp-dev]}}
-  - env: BUILD=stack ARGS="--resolver nightly"
+  - env: BUILD=stack ARGS="--resolver nightly --flag git-vogue:cabal"
     compiler: ": #stack nightly"
     addons: {apt: {packages: [libgmp-dev]}}
 

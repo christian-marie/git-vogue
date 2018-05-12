@@ -57,14 +57,23 @@ executable git-vogue
                      , optparse-applicative
                      , text
 
+-- Cabal made breaking changes between 2.0 and 2.2, and is going to keep
+-- changing I presume
+Flag cabal
+  Description: build cabal plugin
+  Default: False
+
 executable git-vogue-cabal
+  if flag(cabal)
+    build-depends:       base
+                       , Cabal >= 2.2
+                       , git-vogue
+  else
+    buildable: False
   default-language:    Haskell2010
   scope:               private
   hs-source-dirs:      src
   main-is:             git-vogue-cabal.hs
-  build-depends:       base
-                     , Cabal
-                     , git-vogue
 
 executable git-vogue-hlint
   default-language:    Haskell2010

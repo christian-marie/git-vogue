@@ -16,9 +16,8 @@ import           Data.List                                     hiding (and)
 import           Data.Monoid
 import           Distribution.PackageDescription.Check
 import           Distribution.PackageDescription.Configuration (flattenPackageDescription)
-import           Distribution.PackageDescription.Parse         (readGenericPackageDescription)
+import           Distribution.PackageDescription.Parsec        (readGenericPackageDescription)
 import           Distribution.Simple.Utils                     (defaultPackageDesc,
-                                                                toUTF8,
                                                                 wrapText)
 import           Distribution.Verbosity                        (silent)
 import           Git.Vogue.PluginCommon
@@ -85,4 +84,7 @@ check = do
     goodCheck _ = True
 
     printCheckMessages = mapM_ (outputBad . format . explanation)
-    format = toUTF8 . wrapText . ("* "++)
+    -- XXX Cabal changed this between 2.2 and 2, add some formatting again at
+    -- some point.
+    -- format = toUTF8 . wrapText . ("* "++)
+    format = wrapText . ("* "++)
